@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * 单例：使用工厂模式是基础
  * AbstractRegistryFactory. (SPI, Singleton, ThreadSafe)
  *
  * @see com.alibaba.dubbo.registry.RegistryFactory
@@ -41,6 +42,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRegistryFactory.class);
 
     // The lock for the acquisition process of the registry
+    // 锁，用于 #destroyAll() 和 #getRegistry(url) 方法，对 REGISTRIES 访问的竞争
     private static final ReentrantLock LOCK = new ReentrantLock();
 
     // Registry Collection Map<RegistryAddress, Registry>
@@ -80,6 +82,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         }
     }
 
+    // 获得注册中心 Registry 对象。优先从缓存中获取，否则进行创建
     @Override
     public Registry getRegistry(URL url) {
         url = url.setPath(RegistryService.class.getName())
@@ -105,6 +108,10 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         }
     }
 
+    /**
+     * @param url 注册中心地址
+     * @return  Registry 对象
+     */
     protected abstract Registry createRegistry(URL url);
 
 }

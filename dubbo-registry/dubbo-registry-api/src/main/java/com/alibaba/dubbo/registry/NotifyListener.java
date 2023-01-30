@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * NotifyListener. (API, Prototype, ThreadSafe)
+ * 通知监听器。当收到服务变更通知时触发
  *
  * @see com.alibaba.dubbo.registry.RegistryService#subscribe(URL, NotifyListener)
  */

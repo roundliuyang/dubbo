@@ -38,7 +38,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * FailbackRegistry. (SPI, Prototype, ThreadSafe)
- *
+ * 在上文中的代码中，我们可以看到，AbstractRegistry 进行的注册、订阅等操作，更多的是修改状态，而无和注册中心实际的操作。
+ * FailbackRegistry 在 AbstractRegistry 的基础上，实现了和注册中心实际的操作，并且支持失败重试的特性。
  */
 public abstract class FailbackRegistry extends AbstractRegistry {
 

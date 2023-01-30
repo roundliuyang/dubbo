@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * RegistryService. (SPI, Prototype, ThreadSafe)
- *
+ * 注册中心服务接口，定义了注册、订阅、查询三种操作方法
  * @see com.alibaba.dubbo.registry.Registry
  * @see com.alibaba.dubbo.registry.RegistryFactory#getRegistry(URL)
  */
