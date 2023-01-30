@@ -65,7 +65,7 @@ import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidPort;
 
 /**
  * ServiceConfig
- *
+ * 服务提供者暴露服务配置类，ServiceConfig 为重对象，内部封装了与注册中心的连接，以及开启服务端口
  * @export
  */
 public class ServiceConfig<T> extends AbstractServiceConfig {
@@ -194,7 +194,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return unexported;
     }
 
+    /**
+     * 暴露及注册服务
+     */
     public synchronized void export() {
+        // 当 export 或者 delay 未配置，从 ProviderConfig 对象读取
         if (provider != null) {
             if (export == null) {
                 export = provider.getExport();
@@ -203,10 +207,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 delay = provider.getDelay();
             }
         }
+        // 不暴露服务( export = false ) ，则不进行暴露服务逻辑。
         if (export != null && !export) {
             return;
         }
 
+        // 延迟暴露
         if (delay != null && delay > 0) {
             delayExportExecutor.schedule(new Runnable() {
                 @Override
@@ -215,11 +221,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 }
             }, delay, TimeUnit.MILLISECONDS);
         } else {
+            // 立即暴露
             doExport();
         }
     }
 
     protected synchronized void doExport() {
+        // 检查是否可以暴露，若可以，标记已经暴露。
         if (unexported) {
             throw new IllegalStateException("Already unexported!");
         }
@@ -227,10 +235,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             return;
         }
         exported = true;
+        // 校验接口名非空
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
+        // 拼接属性配置（环境变量 + properties 属性）到 ProviderConfig 对象
         checkDefault();
+        // 从 ProviderConfig 对象中，读取 application、module、registries、monitor、protocols 配置对象。
         if (provider != null) {
             if (application == null) {
                 application = provider.getApplication();
@@ -248,6 +259,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 protocols = provider.getProtocols();
             }
         }
+        // 从 ModuleConfig 对象中，读取 registries、monitor 配置对象。
         if (module != null) {
             if (registries == null) {
                 registries = module.getRegistries();
@@ -256,6 +268,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 monitor = module.getMonitor();
             }
         }
+        // 从 ApplicationConfig 对象中，读取 registries、monitor 配置对象。
         if (application != null) {
             if (registries == null) {
                 registries = application.getRegistries();
@@ -264,6 +277,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 monitor = application.getMonitor();
             }
         }
+        // 泛化接口的实现
         if (ref instanceof GenericService) {
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
@@ -276,11 +290,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 校验接口和方法
             checkInterfaceAndMethods(interfaceClass, methods);
+            // 校验指向的 service 对象
             checkRef();
             generic = Boolean.FALSE.toString();
         }
+        // 处理服务接口客户端本地代理( `local` )相关。实际目前已经废弃，使用 `stub` 属性，参见 `AbstractInterfaceConfig#setLocal` 方法
         if (local != null) {
+            // 设为 true，表示使用缺省代理类名，即：接口名 + Local 后缀
             if ("true".equals(local)) {
                 local = interfaceName + "Local";
             }
@@ -294,7 +312,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
+        // 处理服务接口客户端本地代理( `stub` )相关
         if (stub != null) {
+            // 设为 true，表示使用缺省代理类名，即：接口名 + Stub 后缀
             if ("true".equals(stub)) {
                 stub = interfaceName + "Stub";
             }
@@ -308,15 +328,22 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 throw new IllegalStateException("The stub implementation class " + stubClass.getName() + " not implement interface " + interfaceName);
             }
         }
+        // 校验 ApplicationConfig 配置。
         checkApplication();
+        // 校验 RegistryConfig 配置。
         checkRegistry();
+        // 校验 ProtocolConfig 配置数组。
         checkProtocol();
+        // 读取环境变量和 properties 配置到 ServiceConfig 对象。
         appendProperties(this);
+        // 校验 Stub 和 Mock 相关的配置
         checkStub(interfaceClass);
         checkMock(interfaceClass);
+        // 服务路径，缺省为接口名
         if (path == null || path.length() == 0) {
             path = interfaceName;
         }
+        // 暴露服务
         doExportUrls();
         CodecSupport.addProviderSupportedSerialization(getUniqueServiceName(), getExportedUrls());
         ProviderModel providerModel = new ProviderModel(getUniqueServiceName(), this, ref);
