@@ -24,22 +24,39 @@ import java.lang.annotation.Target;
 
 /**
  * Parameter
+ * 用于 Dubbo URL 的 parameters 拼接
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Parameter {
 
+    /**
+     * 键
+     */
     String key() default "";
 
     boolean required() default false;
 
+    /**
+     * 是否忽略
+     */
     boolean excluded() default false;
 
+    /**
+     * 是否转义
+     */
     boolean escaped() default false;
 
+    /**
+     * 是否为属性
+     * 目前用于《事件通知》http://dubbo.apache.org/zh-cn/docs/user/demos/events-notify.html
+     */
     boolean attribute() default false;
 
+    /**
+     * 是否拼接默认属性
+     */
     boolean append() default false;
 
 }
