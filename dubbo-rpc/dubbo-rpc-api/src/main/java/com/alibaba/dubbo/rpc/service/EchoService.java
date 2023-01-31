@@ -28,6 +28,6 @@ public interface EchoService {
      * @param message message.
      * @return message.
      */
-    Object $echo(Object message);
+    Object $echo(Object message) throws Throwable;
 
 }
