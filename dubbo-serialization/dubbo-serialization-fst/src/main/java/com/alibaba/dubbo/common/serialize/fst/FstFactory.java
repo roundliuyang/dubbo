@@ -25,10 +25,19 @@ import org.nustaq.serialization.FSTObjectOutput;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * FST 工厂
+ */
 public class FstFactory {
 
+    /**
+     * 单例
+     */
     private static final FstFactory factory = new FstFactory();
 
+    /**
+     * 配置对象
+     */
     private final FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
 
 
@@ -37,6 +46,7 @@ public class FstFactory {
     }
 
     public FstFactory() {
+        // 注册
         for (Class clazz : SerializableClassRegistry.getRegisteredClasses().keySet()) {
             conf.registerClass(clazz);
         }

@@ -26,8 +26,9 @@ import java.io.OutputStream;
 
 /**
  * Serialization. (SPI, Singleton, ThreadSafe)
+ * 序列化接口
  */
-@SPI("hessian2")
+@SPI("hessian2")      // Dubbo SPI 拓展点，默认为 "hessian2" ，即未配置情况下，使用 Hessian 进行序列化和反序列化
 public interface Serialization {
 
     /**
