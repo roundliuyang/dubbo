@@ -18,6 +18,7 @@ package com.alibaba.dubbo.common.extension;
 
 /**
  * ExtensionFactory
+ * 拓展工厂接口
  */
 @SPI
 public interface ExtensionFactory {

@@ -50,6 +50,8 @@ import java.lang.annotation.Target;
  * Fails to load Extension("mina"). When user configure to use mina, dubbo will complain the extension cannot be loaded,
  * instead of reporting which extract extension implementation fails and the extract reason.
  * </p>
+ *
+ * 扩展点接口的标识
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -58,6 +60,12 @@ public @interface SPI {
 
     /**
      * default extension name
+     * 例如，Protocol 拓展接口，代码如下：
+     *      @SPI("dubbo")
+     *      public interface Protocol {
+     *          // ... 省略代码
+     *      }
+     *  其中 "dubbo" 指的是 DubboProtocol ，Protocol 默认的拓展实现类。
      */
     String value() default "";
 

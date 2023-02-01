@@ -27,6 +27,9 @@ import java.lang.annotation.Target;
 /**
  * Provide helpful information for {@link ExtensionLoader} to inject dependency extension instance.
  *
+ * 自适应拓展信息的标记
+ * @Adaptive 注解，可添加类或方法上，分别代表了两种不同的使用方式
+ *
  * @see ExtensionLoader
  * @see URL
  */
