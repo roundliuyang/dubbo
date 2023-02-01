@@ -35,6 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * Abort Policy.
  * Log warn info when abort.
+ * 拒绝策略实现类。打印 JStack ，分析线程状态
  */
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
@@ -42,10 +43,16 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     private final String threadName;
 
+    /**
+     * URL 对象
+     */
     private final URL url;
 
     private static volatile long lastPrintTime = 0;
 
+    /**
+     * 信号量，大小为1
+     */
     private static Semaphore guard = new Semaphore(1);
 
     public AbortPolicyWithReport(String threadName, URL url) {
@@ -55,6 +62,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        // 打印警告日志
         String msg = String.format("Thread pool is EXHAUSTED!" +
                         " Thread Name: %s, Pool Size: %d (active: %d, core: %d, max: %d, largest: %d), Task: %d (completed: %d)," +
                         " Executor status:(isShutdown:%s, isTerminated:%s, isTerminating:%s), in %s://%s:%d!",
@@ -62,7 +70,9 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
                 e.getTaskCount(), e.getCompletedTaskCount(), e.isShutdown(), e.isTerminated(), e.isTerminating(),
                 url.getProtocol(), url.getIp(), url.getPort());
         logger.warn(msg);
+        // 打印 JStack ，分析线程状态。
         dumpJStack();
+        // 抛出 RejectedExecutionException 异常
         throw new RejectedExecutionException(msg);
     }
 
