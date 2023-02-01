@@ -23,25 +23,27 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * Transporter. (SPI, Singleton, ThreadSafe)
+ * 网络传输接口
+ *
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Transport_Layer">Transport Layer</a>
  * <a href="http://en.wikipedia.org/wiki/Client%E2%80%93server_model">Client/Server</a>
  *
  * @see com.alibaba.dubbo.remoting.Transporters
  */
-@SPI("netty")
+@SPI("netty")      // Dubbo SPI 拓展点，默认为 "netty" 。注意，此处的 netty 对应的是 netty3 ，因为 Dubbo 项目在开发时，netty4 并未发布。配置方式见 《Dubbo 用户指南 —— Netty4》 文档。
 public interface Transporter {
 
     /**
      * Bind a server.
      *
      * @param url     server url
-     * @param handler
+     * @param handler 通道处理器
      * @return server
      * @throws RemotingException
      * @see com.alibaba.dubbo.remoting.Transporters#bind(URL, ChannelHandler...)
      */
-    @Adaptive({Constants.SERVER_KEY, Constants.TRANSPORTER_KEY})
+    @Adaptive({Constants.SERVER_KEY, Constants.TRANSPORTER_KEY})        // 基于 Dubbo SPI Adaptive 机制，加载对应的 Server 实现，使用 URL.server 或 URL.transporter 属性。
     Server bind(URL url, ChannelHandler handler) throws RemotingException;
 
     /**
@@ -53,7 +55,7 @@ public interface Transporter {
      * @throws RemotingException
      * @see com.alibaba.dubbo.remoting.Transporters#connect(URL, ChannelHandler...)
      */
-    @Adaptive({Constants.CLIENT_KEY, Constants.TRANSPORTER_KEY})
+    @Adaptive({Constants.CLIENT_KEY, Constants.TRANSPORTER_KEY})               // 基于 Dubbo SPI Adaptive 机制，加载对应的 Client 实现，使用 URL.client 或 URL.transporter 属性。
     Client connect(URL url, ChannelHandler handler) throws RemotingException;
 
 }

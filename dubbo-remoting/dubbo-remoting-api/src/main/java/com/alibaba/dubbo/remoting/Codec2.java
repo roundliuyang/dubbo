@@ -23,9 +23,19 @@ import com.alibaba.dubbo.remoting.buffer.ChannelBuffer;
 
 import java.io.IOException;
 
+/**
+ * 编解码器接口
+ */
 @SPI
 public interface Codec2 {
 
+    /**
+     * 编码
+     * @param channel 通道
+     * @param buffer
+     * @param message
+     * @throws IOException
+     */
     @Adaptive({Constants.CODEC_KEY})
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
 

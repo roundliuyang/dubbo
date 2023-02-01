@@ -24,6 +24,7 @@ import com.alibaba.dubbo.remoting.transport.ChannelHandlerDispatcher;
 
 /**
  * Transporter facade. (API, Static, ThreadSafe)
+ * Transporter 门面类
  */
 public class Transporters {
 
@@ -47,12 +48,15 @@ public class Transporters {
         if (handlers == null || handlers.length == 0) {
             throw new IllegalArgumentException("handlers == null");
         }
+        // 创建 handler
         ChannelHandler handler;
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
+        // 基于 Dubbo SPI 机制，获得 Transporter$Adaptive 对象,bind(url, handler) 方法，在 Transporter$Adaptive 对象中，
+        // 会根据 url 参数，获得对应的 Transporter 实现对象（例如， NettyTransporter），从而创建对应的 Server 对象（例如， NettyServer）
         return getTransporter().bind(url, handler);
     }
 
