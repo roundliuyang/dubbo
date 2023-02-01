@@ -89,6 +89,7 @@ public class FastJsonObjectOutput implements ObjectOutput {
         writer.println(new String(b, off, len));
     }
 
+
     @Override
     public void writeObject(Object obj) throws IOException {
         SerializeWriter out = new SerializeWriter();
