@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Proxy.
+ * 代理抽象类，用于创建 Proxy 和 proxy 对象
  */
 
 public abstract class Proxy {
