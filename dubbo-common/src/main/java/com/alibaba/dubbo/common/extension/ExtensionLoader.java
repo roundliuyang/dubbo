@@ -382,9 +382,13 @@ public class ExtensionLoader<T> {
     public T getExtension(String name) {
         if (name == null || name.length() == 0)
             throw new IllegalArgumentException("Extension name == null");
+
+        // 查找 默认的 拓展对象
         if ("true".equals(name)) {
             return getDefaultExtension();
         }
+
+        // 从 缓存中 获得对应的拓展对象
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {
             cachedInstances.putIfAbsent(name, new Holder<Object>());
@@ -394,8 +398,10 @@ public class ExtensionLoader<T> {
         if (instance == null) {
             synchronized (holder) {
                 instance = holder.get();
+                // 从 缓存中 未获取到，进行创建缓存对象。
                 if (instance == null) {
                     instance = createExtension(name);
+                    // 设置创建对象到缓存中
                     holder.set(instance);
                 }
             }
@@ -521,16 +527,24 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 获得自适应拓展对象
+     * @return 拓展对象
+     */
     @SuppressWarnings("unchecked")
     public T getAdaptiveExtension() {
+        // 从缓存中，获得自适应拓展对象
         Object instance = cachedAdaptiveInstance.get();
         if (instance == null) {
+            // 若之前未创建报错，
             if (createAdaptiveInstanceError == null) {
                 synchronized (cachedAdaptiveInstance) {
                     instance = cachedAdaptiveInstance.get();
                     if (instance == null) {
                         try {
+                            // 创建自适应拓展对象
                             instance = createAdaptiveExtension();
+                            // 设置到缓存
                             cachedAdaptiveInstance.set(instance);
                         } catch (Throwable t) {
                             createAdaptiveInstanceError = t;
@@ -538,6 +552,7 @@ public class ExtensionLoader<T> {
                         }
                     }
                 }
+            // 若之前创建报错，则抛出异常 IllegalStateException
             } else {
                 throw new IllegalStateException("fail to create adaptive instance: " + createAdaptiveInstanceError.toString(), createAdaptiveInstanceError);
             }
@@ -571,19 +586,29 @@ public class ExtensionLoader<T> {
         return new IllegalStateException(buf.toString());
     }
 
+    /**
+     * 创建拓展名的拓展对象，并缓存。
+     * @param name  拓展名
+     * @return 拓展对象
+     */
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
+        // 获得拓展名对应的拓展实现类
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
         }
         try {
+            // 从缓存中，获得拓展对象。
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
+                // 当缓存不存在时，创建拓展对象，并添加到 EXTENSION_INSTANCES 中。因为 #getExtension(name) 方法中已经加 synchronized 修饰，所以此处不用同步。
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            // 注入依赖的属性,向创建的拓展注入其依赖的属性
             injectExtension(instance);
+            // 创建 Wrapper 拓展对象,将 instance 包装在其中
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
                 for (Class<?> wrapperClass : wrapperClasses) {
