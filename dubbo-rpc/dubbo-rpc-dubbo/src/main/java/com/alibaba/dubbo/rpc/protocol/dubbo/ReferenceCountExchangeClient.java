@@ -35,16 +35,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings("deprecation")
 final class ReferenceCountExchangeClient implements ExchangeClient {
 
+    /**
+     * URL
+     */
     private final URL url;
+
+    /**
+     * 指向数量
+     */
     private final AtomicInteger refenceCount = new AtomicInteger(0);
 
+    /**
+     * 幽灵客户端集合
+     */
     //    private final ExchangeHandler handler;
     private final ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap;
+
+    /**
+     * 客户端
+     */
     private ExchangeClient client;
 
 
     public ReferenceCountExchangeClient(ExchangeClient client, ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap) {
         this.client = client;
+        // 指向加一
         refenceCount.incrementAndGet();
         this.url = client.getUrl();
         if (ghostClientMap == null) {
