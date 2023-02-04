@@ -29,8 +29,25 @@ import com.alibaba.dubbo.rpc.RpcResult;
 
 import java.io.IOException;
 
+/**
+ * 支持多消息的编解码器
+ * 在 Dubbo Client 和 Server 创建的过程，我们看到设置了编解码器为 "dubbo" ，从而通过 Dubbo SPI 机制，加载到 DubboCountCodec 。相关内容如下：
+ *
+ *     // DubboProtocol#createServer(...)
+ *     url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
+ *
+ *     // DubboProtocol#initClient(...)
+ *     url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
+ *
+ *     // META-INF/dubbo/internal/com.alibaba.dubbo.remoting.Codec2
+ *     dubbo=com.alibaba.dubbo.rpc.protocol.dubbo.DubboCountCodec
+ * 实际编解码的逻辑，使用 DubboCodec ，即 codec 属性
+ */
 public final class DubboCountCodec implements Codec2 {
 
+    /**
+     * 编解码器
+     */
     private DubboCodec codec = new DubboCodec();
 
     @Override
@@ -40,22 +57,33 @@ public final class DubboCountCodec implements Codec2 {
 
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
+        // 记录当前读位置，用于下面计算每条消息的长度。
         int save = buffer.readerIndex();
+        // 创建 MultiMessage 对象，MultiMessageHandler 支持对它的处理分发
         MultiMessage result = MultiMessage.create();
+        // 循环解析消息，直到结束
         do {
+            // 解码
             Object obj = codec.decode(channel, buffer);
+            // 输入不够，重置读进度
             if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) {
                 buffer.readerIndex(save);
                 break;
+            // 解析到消息
             } else {
+                // 添加结果消息
                 result.addMessage(obj);
+                // 记录消息长度到隐式参数集合，用于 MonitorFilter 监控
                 logMessageLength(obj, buffer.readerIndex() - save);
+                // 记录当前读位置
                 save = buffer.readerIndex();
             }
         } while (true);
+        // 需要更多的输入
         if (result.isEmpty()) {
             return Codec2.DecodeResult.NEED_MORE_INPUT;
         }
+        // 返回解析到的消息
         if (result.size() == 1) {
             return result.get(0);
         }
