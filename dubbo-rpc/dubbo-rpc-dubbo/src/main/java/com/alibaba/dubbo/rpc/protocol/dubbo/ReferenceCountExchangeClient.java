@@ -123,6 +123,9 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
         client.reset(parameters);
     }
 
+    /**
+     * 基于装饰器模式，所以，每个实现方法，都是调用 client 的对应的方法
+     */
     @Override
     public void send(Object message) throws RemotingException {
         client.send(message);

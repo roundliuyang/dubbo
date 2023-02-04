@@ -383,6 +383,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         //attributes are stored by system context.
         // 添加到 StaticContext 进行缓存
         StaticContext.getSystemContext().putAll(attributes);
+        // 创建 Service 代理对象
         ref = createProxy(map);
         ConsumerModel consumerModel = new ConsumerModel(getUniqueServiceName(), this, ref, interfaceClass.getMethods());
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
@@ -436,8 +437,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         // 若 url.protocol = registry 时，注册中心的地址，在参数 url.parameters.refer 上，设置上服务引用的配置参数集合 map
                         if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                             urls.add(url.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
-                        // 服务提供者的地址,一般情况下，不建议这样在 url 配置注册中心，而是在 registry 配置。如果要配置，
-                        // 格式为 registry://host:port?registry= ，例如 registry://127.0.0.1?registry=zookeeper 。
+                        // 服务提供者的地址,一般情况下，不建议这样在 url 配置注册中心，而是在 registry 配置。如果要配置，格式为 registry://host:port?registry= ，例如 registry://127.0.0.1?registry=zookeeper 。
                         } else {
                             urls.add(ClusterUtils.mergeUrl(url, map));
                         }
@@ -457,7 +457,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                             map.put(Constants.MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                         }
                         /**
-                         * 调用 URL#addParameterAndEncoded(key, value) 方法，将服务引用配置对象参数集合 map ，
+                         * 调用 URL#addParameterAndEncoded(key, value) 方法，将服务引用配置对象参数集合 map
                          * 作为 "refer" 参数添加到注册中心的 URL 中，并且需要编码。通过这样的方式，注册中心的 URL 中，包含了服务引用的配置。
                          */
                         urls.add(u.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
@@ -470,7 +470,24 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
             // 单 urls 时，直接调用 Protocol#refer(type, url) 方法，引用服务，返回 Invoker 对象
             if (urls.size() == 1) {
-                // 引用服务
+                /**
+                 * 直接调用 Protocol#refer(type, url) 方法，引用服务，返回 Invoker 对象。
+                 * 此处 Dubbo SPI 自适应的特性的好处就出来了，可以自动根据 URL 参数，获得对应的拓展实现。例如，invoker 传入后，根据 invoker.url 自动获得对应 Protocol 拓展实现为 DubboProtocol 。
+                 * 实际上，Protocol 有两个 Wrapper 拓展实现类： ProtocolFilterWrapper、ProtocolListenerWrapper 。所以，#export(...) 方法的调用顺序是：
+                 * Protocol$Adaptive => ProtocolFilterWrapper => ProtocolListenerWrapper => RegistryProtocol
+                 * =>
+                 * Protocol$Adaptive => ProtocolFilterWrapper => ProtocolListenerWrapper => DubboProtocol
+                 * 也就是说，这一条大的调用链，包含两条小的调用链。原因是：
+                 * 首先，传入的是注册中心的 URL ，通过 Protocol$Adaptive 获取到的是 RegistryProtocol 对象。
+                 * 其次，RegistryProtocol 会在其 #refer(...) 方法中，使用服务提供者的 URL ( 即注册中心的 URL 的 refer 参数值)，再次调用 Protocol$Adaptive 获取到的是 DubboProtocol 对象，进行服务暴露。
+                 * 为什么是这样的顺序？通过这样的顺序，可以实现类似 AOP 的效果，在获取服务提供者列表后，再创建连接服务提供者的客户端。伪代码如下：
+                 *     RegistryProtocol#refer(...) {
+                 *         // 1. 获取服务提供者列表 【并且订阅】
+                 *         // 2. 创建调用连接服务提供者的客户端
+                 *         DubboProtocol#refer(...);
+                 *         // ps：实际这个过程中，还有别的代码，详细见下文。
+                 *     }
+                 */
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             // 多 urls 时，循环调用 Protocol#refer(type, url) 方法，引用服务，返回 Invoker 对象。此时，会有多个 Invoker 对象，需要进行合并。
             } else {
