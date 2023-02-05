@@ -26,9 +26,18 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Kryo 对象输出实现类
+ */
 public class KryoObjectOutput implements ObjectOutput, Cleanable {
 
+    /**
+     * Kryo 对象,kryo 属性，通过 KryoUtils#get() 方法，获取
+     */
     private Output output;
+    /**
+     * Kryo 输出
+     */
     private Kryo kryo;
 
     public KryoObjectOutput(OutputStream outputStream) {

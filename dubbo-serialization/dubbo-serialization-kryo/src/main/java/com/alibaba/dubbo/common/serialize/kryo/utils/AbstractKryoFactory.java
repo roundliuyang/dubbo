@@ -57,12 +57,24 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+/**
+ * Kryo 工厂抽象类
+ */
 public abstract class AbstractKryoFactory implements KryoFactory {
 
+    /**
+     * 需要注册的类的集合
+     */
     private final Set<Class> registrations = new LinkedHashSet<Class>();
 
+    /**
+     * 是否开启注册行为
+     */
     private boolean registrationRequired;
 
+    /**
+     * Kryo 是否已经创建
+     */
     private volatile boolean kryoCreated;
 
     public AbstractKryoFactory() {

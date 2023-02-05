@@ -28,9 +28,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 
+/**
+ * 实现 ObjectInput, Cleanable 接口，Kryo 对象输入实现类
+ */
 public class KryoObjectInput implements ObjectInput, Cleanable {
 
+    /**
+     * kryo 对象,kryo 属性，通过 KryoUtils#get() 方法，获取
+     */
     private Kryo kryo;
+    /**
+     * kryo 输入
+     */
     private Input input;
 
     public KryoObjectInput(InputStream inputStream) {
