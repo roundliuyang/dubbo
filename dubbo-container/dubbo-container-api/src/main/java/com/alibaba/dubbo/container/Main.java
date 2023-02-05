@@ -32,15 +32,25 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Main. (API, Static, ThreadSafe)
+ * 启动程序，负责初始化 Container 服务容器
  */
 public class Main {
 
+    /**
+     * Container 配置 KEY
+     */
     public static final String CONTAINER_KEY = "dubbo.container";
 
+    /**
+     * ShutdownHook 是否开启配置 KEY
+     */
     public static final String SHUTDOWN_HOOK_KEY = "dubbo.shutdown.hook";
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    /**
+     * Container 拓展点对应的 ExtensionLoader 对象
+     */
     private static final ExtensionLoader<Container> loader = ExtensionLoader.getExtensionLoader(Container.class);
 
     private static final ReentrantLock LOCK = new ReentrantLock();
@@ -49,11 +59,13 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+            // 若 main 函数参数传入为空，从配置中加载
             if (args == null || args.length == 0) {
                 String config = ConfigUtils.getProperty(CONTAINER_KEY, loader.getDefaultExtensionName());
                 args = Constants.COMMA_SPLIT_PATTERN.split(config);
             }
 
+            // 加载容器数组
             final List<Container> containers = new ArrayList<Container>();
             for (int i = 0; i < args.length; i++) {
                 containers.add(loader.getExtension(args[i]));
@@ -65,6 +77,7 @@ public class Main {
                     @Override
                     public void run() {
                         for (Container container : containers) {
+                            // 关闭容器
                             try {
                                 container.stop();
                                 logger.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
@@ -72,9 +85,12 @@ public class Main {
                                 logger.error(t.getMessage(), t);
                             }
                             try {
+                                // 获得 ReentrantLock
                                 LOCK.lock();
+                                // 唤醒 Main 主线程的等待
                                 STOP.signal();
                             } finally {
+                                // 释放 ReentrantLock
                                 LOCK.unlock();
                             }
                         }
@@ -82,10 +98,12 @@ public class Main {
                 });
             }
 
+            // 启动容器
             for (Container container : containers) {
                 container.start();
                 logger.info("Dubbo " + container.getClass().getSimpleName() + " started!");
             }
+            // 输出提示，启动成功
             System.out.println(new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]").format(new Date()) + " Dubbo service server started!");
         } catch (RuntimeException e) {
             e.printStackTrace();
@@ -98,6 +116,7 @@ public class Main {
         } catch (InterruptedException e) {
             logger.warn("Dubbo service server stopped, interrupted by other thread!", e);
         } finally {
+            // 释放 ReentrantLock
             LOCK.unlock();
         }
     }

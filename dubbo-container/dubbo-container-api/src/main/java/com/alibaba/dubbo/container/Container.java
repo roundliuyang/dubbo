@@ -20,8 +20,9 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * Container. (SPI, Singleton, ThreadSafe)
+ * 定义了容器的启动和停止两个方法
  */
-@SPI("spring")
+@SPI("spring")    // @SPI("spring") 注解，Dubbo SPI 拓展点，默认为 "spring"
 public interface Container {
 
     /**
