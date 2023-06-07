@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
+ * 自适应类的代码生成器
  * Code generator for Adaptive class
  */
 public class AdaptiveClassCodeGenerator {

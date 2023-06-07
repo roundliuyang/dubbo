@@ -165,13 +165,20 @@ public class ExtensionLoader<T> {
     }
 
     ExtensionLoader(Class<?> type, ExtensionDirector extensionDirector, ScopeModel scopeModel) {
+        //当前扩展加载器,需要加载的扩展的类型
         this.type = type;
+        // 创建扩展加载器的扩展访问器对象
         this.extensionDirector = extensionDirector;
+        // 从扩展访问器中获取扩展执行前后的回调器
         this.extensionPostProcessors = extensionDirector.getExtensionPostProcessors();
+        // 创建实例化对象的策略对象
         initInstantiationStrategy();
+        // 如果当前扩展类型为扩展注入器类型则设置当前注入器变量为空,否则的话获取一个扩展注入器扩展对象
         this.injector = (type == ExtensionInjector.class ? null : extensionDirector.getExtensionLoader(ExtensionInjector.class)
             .getAdaptiveExtension());
+        // 创建Activate注解的排序器
         this.activateComparator = new ActivateComparator(extensionDirector);
+        // 为扩展加载器下的域模型对象赋值
         this.scopeModel = scopeModel;
     }
 

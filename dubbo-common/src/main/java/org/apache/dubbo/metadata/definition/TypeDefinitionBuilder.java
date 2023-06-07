@@ -40,6 +40,7 @@ public class TypeDefinitionBuilder {
     public static List<TypeBuilder> BUILDERS;
 
     public static void initBuilders(FrameworkModel model) {
+        // model.getExtensionLoader(TypeBuilder.class)    Dubbo的分层模型获取扩展加载器对象
         Set<TypeBuilder> tbs = model.getExtensionLoader(TypeBuilder.class).getSupportedExtensionInstances();
         BUILDERS = new ArrayList<>(tbs);
     }

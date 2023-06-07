@@ -17,6 +17,7 @@
 package org.apache.dubbo.common.extension;
 
 /**
+ * Dubbo普通的扩展加载策略,将加载目录为META-INF/dubbo/的扩展
  * Dubbo {@link LoadingStrategy}
  *
  * @since 2.7.7

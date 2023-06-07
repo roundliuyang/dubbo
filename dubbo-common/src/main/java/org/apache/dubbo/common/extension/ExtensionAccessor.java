@@ -17,12 +17,17 @@
 package org.apache.dubbo.common.extension;
 
 /**
+ * 扩展的统一访问器
  * Uniform accessor for extension
  */
 public interface ExtensionAccessor {
 
     ExtensionDirector getExtensionDirector();
 
+    /**
+     * 模型对象(FrameworkModel)-–> 扩展访问器(ExtensionAccessor) —> 作用域扩展加载程序管理器(ExtensionDirector)
+     * 这个getExtensionDirector()方法来源于FrameworkModel的抽象父类型ScopeModel中的getExtensionDirector()
+     */
     default <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
         return this.getExtensionDirector().getExtensionLoader(type);
     }

@@ -17,6 +17,8 @@
 package org.apache.dubbo.common.extension;
 
 /**
+ * Dubbo内置的扩展加载策略,将加载文件目录为META-INF/dubbo/internal/的扩展
+ *
  * Dubbo internal {@link LoadingStrategy}
  *
  * @since 2.7.7

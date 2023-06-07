@@ -164,6 +164,9 @@ public abstract class ScopeModel implements ExtensionAccessor {
         attributes.put(key, value);
     }
 
+    /**
+     * 直接返回了extensionDirector
+     */
     @Override
     public ExtensionDirector getExtensionDirector() {
         return extensionDirector;
