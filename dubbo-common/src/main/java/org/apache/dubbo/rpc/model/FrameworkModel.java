@@ -66,9 +66,15 @@ public class FrameworkModel extends ScopeModel {
     private Object instLock = new Object();
 
     public FrameworkModel() {
+        // 调用父类型ScopeModel传递参数，这个构造器的第一个参数为空代表这是一个顶层的域模型，第二个代表了这个是框架FRAMEWORK域，第三个false不是内部域
         super(null, ExtensionScope.FRAMEWORK, false);
+
+        //内部id用于表示模型树的层次结构，如层次结构:
+        //FrameworkModel（索引=1）->ApplicationModel（索引=2）->ModuleModel（索引=1，第一个用户模块）
+        //这个index变量是static类型的为静态全局变量默认值从1开始，如果有多个框架模型对象则internalId编号从1开始依次递增
         this.setInternalId(String.valueOf(index.getAndIncrement()));
         // register FrameworkModel instance early
+        // 将当前新创建的框架实例对象添加到容器中
         synchronized (globalLock) {
             allInstances.add(this);
             resetDefaultFrameworkModel();
@@ -158,15 +164,18 @@ public class FrameworkModel extends ScopeModel {
     }
 
     /**
+     * FrameworkModel(框架模型)的默认模型获取工厂方法defaultModel()
      * During destroying the default FrameworkModel, the FrameworkModel.defaultModel() or ApplicationModel.defaultModel()
      * will return a broken model, maybe cause unpredictable problem.
      * Recommendation: Avoid using the default model as much as possible.
      * @return the global default FrameworkModel
      */
     public static FrameworkModel defaultModel() {
+        // 双重校验锁的形式创建单例对象
         FrameworkModel instance = defaultInstance;
         if (instance == null) {
             synchronized (globalLock) {
+                // 重置默认框架模型
                 resetDefaultFrameworkModel();
                 if (defaultInstance == null) {
                     defaultInstance = new FrameworkModel();
@@ -298,12 +307,16 @@ public class FrameworkModel extends ScopeModel {
     }
 
     private static void resetDefaultFrameworkModel() {
+        // 全局悲观锁，同一个时刻只能有一个线程执行重置操作
         synchronized (globalLock) {
+            // defaultInstance为当前成员变量FrameworkModel类型代表当前默认的FrameworkModel类型的实例对象
             if (defaultInstance != null && !defaultInstance.isDestroyed()) {
                 return;
             }
             FrameworkModel oldDefaultFrameworkModel = defaultInstance;
+            // 存在实例模型列表则直接从内存缓存中查后续不需要创建了
             if (allInstances.size() > 0) {
+                // 当前存在的有FrameworkModel框架实例多个列表则取第一个为默认的
                 defaultInstance = allInstances.get(0);
             } else {
                 defaultInstance = null;

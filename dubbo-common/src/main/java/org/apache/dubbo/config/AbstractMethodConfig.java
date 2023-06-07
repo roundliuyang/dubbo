@@ -25,6 +25,8 @@ import org.apache.dubbo.rpc.model.ScopeModel;
 import java.util.Map;
 
 /**
+ * 抽象的方法配置,同样这个类型也是见名知意,服务方法的相关配置处理,这个类型主要用于对服务方法的一些配置信息建模比如服务方法的调用超时时间,
+ * 重试次数,最大并发调用数,负载均衡策略,是否异步调用,是否确认异步发送等等配置信息.
  * AbstractMethodConfig
  *
  * @export

@@ -34,6 +34,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
 /**
+ * 服务工厂bean，这个主要是Spring模块来简化配置的一个服务工厂Bean这里就先不详细介绍Spring相关的配置
  * ServiceFactoryBean
  *
  * @export

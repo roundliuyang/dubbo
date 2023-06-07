@@ -40,6 +40,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATT
 import static org.apache.dubbo.common.constants.CommonConstants.DUBBO;
 
 /**
+ * 服务的基础配置类,这个类型仍旧是个抽象的类型提取了一些基础的配置:导出服务的接口类,服务名称,接口实现的引用类型,提供者配置,是否是通用服务GenericService
  * ServiceConfig
  *
  * @export
@@ -82,7 +83,9 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
 
 
     public ServiceConfigBase() {
+        //服务元数据对象创建
         serviceMetadata = new ServiceMetadata();
+        // 为服务元数据对象
         serviceMetadata.addAttribute("ORIGIN_CONFIG", this);
     }
 
@@ -122,6 +125,7 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
     @Override
     protected void postProcessAfterScopeModelChanged(ScopeModel oldScopeModel, ScopeModel newScopeModel) {
         super.postProcessAfterScopeModelChanged(oldScopeModel, newScopeModel);
+        // 当服务提供者配置对象不为空时候为服务提供者对象设置域模型,这里服务提供者对象仍旧为空,这个一般用在兼容Dubbo低版本
         if (this.provider != null && this.provider.getScopeModel() != scopeModel) {
             this.provider.setScopeModel(scopeModel);
         }

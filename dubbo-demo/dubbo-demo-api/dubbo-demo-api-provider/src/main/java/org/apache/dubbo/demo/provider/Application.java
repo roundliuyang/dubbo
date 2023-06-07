@@ -41,6 +41,7 @@ public class Application {
     }
 
     private static void startWithBootstrap() {
+        // 创建一个服务配置对象
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());

@@ -93,6 +93,12 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.EXPORT_KEY;
 import static org.apache.dubbo.rpc.support.ProtocolUtils.isGeneric;
 
+/**
+ * 服务配置实现类，上面的类型都是抽象类型不能做为具体存在的事物,这个类型是我们出现的第一个服务配置实现类型,
+ * 服务配置实现类已经从父类型中继承了这么多的属性,这里主要为实现服务提供了一些配置如服务的协议配置,
+ * 服务的代理工厂JavassistProxyFactory是将生成导出服务代理的ProxyFactory实现，是其默认实现,服务提供者模型,是否导出服务,导出的服务列表,服务监听器等等.
+ * @param <T>
+ */
 public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     private static final long serialVersionUID = 7868244018230856253L;
@@ -133,6 +139,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     private final List<ServiceListener> serviceListeners = new ArrayList<>();
 
+    /**
+     * 根据Java基础的构造器知识,在每个构造器的第一行都会有个super方法来调用父类的构造器,
+     * 当前这个super方法我们可以不写但是Java编译器底层还是会为我们默认加上这么一行super()代码来调用父类构造器的.
+     * 对于上面我提到的这几个构造器根据代码被调用的先后顺序,这里重点说几个重要的,这里我仍旧按代码执行的先后顺序来说:
+     */
     public ServiceConfig() {
     }
 
@@ -151,7 +162,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     @Override
     protected void postProcessAfterScopeModelChanged(ScopeModel oldScopeModel, ScopeModel newScopeModel) {
         super.postProcessAfterScopeModelChanged(oldScopeModel, newScopeModel);
+        //初始化当前协议对象,通过扩展机制获取协议Protocol类型的对象
         protocolSPI = this.getExtensionLoader(Protocol.class).getAdaptiveExtension();
+        //初始化当前代理工厂对象,通过扩展机制获取ProxyFactory类型的对象
         proxyFactory = this.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     }
 

@@ -80,6 +80,21 @@ import static org.apache.dubbo.common.constants.RegistryConstants.CATEGORY_KEY;
 import static org.apache.dubbo.common.utils.StringUtils.isBlank;
 
 /**
+ * 用于在各个扩展点之间传递数据
+ * 可以看出，dubbo 认为 protocol，username，passwored，host，port，path 是主要的 URL 参数，其他键值对存放在 parameters 之中。
+ *
+ * 一些典型的 Dubbo URL
+ * dubbo://192.168.1.6:20880/moe.cnkirito.sample.HelloService?timeout=3000
+ * 描述一个 dubbo 协议的服务
+ *
+ * zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=demo-consumer&dubbo=2.0.2&interface=org.apache.dubbo.registry.RegistryService&pid=1214&qos.port=33333&timestamp=1545721981946
+ * 描述一个 zookeeper 注册中心
+ *
+ * consumer://30.5.120.217/org.apache.dubbo.demo.DemoService?application=demo-consumer&category=consumers&check=false&dubbo=2.0.2&interface=org.apache.dubbo.demo.DemoService&methods=sayHello&pid=1209&qos.port=33333&side=consumer&timestamp=1545721827784
+ * 描述一个消费者
+ *
+ * 可以说，任意的一个领域中的一个实现都可以认为是一类 URL，dubbo 使用 URL 来统一描述了元数据，配置信息，贯穿在整个框架之中。
+ *
  * URL - Uniform Resource Locator (Immutable, ThreadSafe)
  * <p>
  * url example:
@@ -181,6 +196,16 @@ class URL implements Serializable {
         this(protocol, username, password, host, port, path, CollectionUtils.toStringMap(pairs));
     }
 
+    /**
+     *
+     * @param protocol 一般是 dubbo 中的各种协议 如：dubbo thrift http zk
+     * @param username 用户名
+     * @param password 密码
+     * @param host 主机
+     * @param port 端口
+     * @param path 接口名称
+     * @param parameters 参数键值对
+     */
     public URL(String protocol,
                String username,
                String password,

@@ -57,6 +57,9 @@ import static org.apache.dubbo.common.constants.MetricsConstants.PROTOCOL_PROMET
 
 
 /**
+ * 抽象的接口配置,与前面介绍的方法配置类似,这个类型是对服务接口的建模,主要的配置信息有暴漏服务的接口名字,服务接口的版本号,
+ * 客户/提供方将引用的远程服务分组,服务元数据,服务接口的本地impl类名,服务监控配置,对于生成动态代理的策略，
+ * 可以选择两种策略：jdk和javassist,容错类型等等配置
  * AbstractDefaultConfig
  *
  * @export
@@ -84,7 +87,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      * The remote service group the customer/provider side will reference
      */
     protected String group;
-    
+
     protected ServiceMetadata serviceMetadata;
     /**
      * Local impl class name for the service interface
@@ -230,19 +233,29 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 //        }
 
         // change referenced config's scope model
+        // 获取应用程序模型对象
         ApplicationModel applicationModel = ScopeModelUtil.getApplicationModel(scopeModel);
+
+        // 为配置中心对象设置ApplicationModel类型对象(当前阶段配置中心配置对象为空)
         if (this.configCenter != null && this.configCenter.getScopeModel() != applicationModel) {
             this.configCenter.setScopeModel(applicationModel);
         }
+
+        //为元数据配置对象设置ApplicationModel类型对象(当前阶段数据配置配置对象为空)
         if (this.metadataReportConfig != null && this.metadataReportConfig.getScopeModel() != applicationModel) {
             this.metadataReportConfig.setScopeModel(applicationModel);
         }
+        // 为MonitorConfig服务监控配置对象设置ApplicationModel类型对象(当前阶段数据配置配置对象为空)
         if (this.monitor != null && this.monitor.getScopeModel() != applicationModel) {
             this.monitor.setScopeModel(applicationModel);
         }
+
+        // 这个if判断和上面的上面是重复的估计是写代码人加班加的太久了,没注意看
         if (this.metadataReportConfig != null && this.metadataReportConfig.getScopeModel() != applicationModel) {
             this.metadataReportConfig.setScopeModel(applicationModel);
         }
+
+        // 如果注册中心配置列表不为空则为每个注册中心配置设置一个ApplicationModel类型对象(当前注册中心对象都为空)
         if (CollectionUtils.isNotEmpty(this.registries)) {
             this.registries.forEach(registryConfig -> {
                 if (registryConfig.getScopeModel() != applicationModel) {
@@ -261,7 +274,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         for (RegistryConfig registryConfig : registries) {
             if (!registryConfig.isValid()) {
                 throw new IllegalStateException("No registry config found or it's not a valid config! " +
-                        "The registry config is: " + registryConfig);
+                    "The registry config is: " + registryConfig);
             }
         }
     }
@@ -293,6 +306,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     /**
      * To obtain the method list in the port, use reflection when in native mode and javaassist otherwise.
+     *
      * @param interfaceClass
      * @return
      */
@@ -320,7 +334,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 return;
             }
             if (!interfaceClass.isInterface()) {
-                throw new IllegalStateException(interfaceName+" is not an interface");
+                throw new IllegalStateException(interfaceName + " is not an interface");
             }
 
             // Auto create MethodConfig/ArgumentConfig according to config props
@@ -445,18 +459,18 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         verifyStubAndLocal(stub, "Stub", interfaceClass);
     }
 
-    private void verifyStubAndLocal(String className, String label, Class<?> interfaceClass){
+    private void verifyStubAndLocal(String className, String label, Class<?> interfaceClass) {
         if (ConfigUtils.isNotEmpty(className)) {
             Class<?> localClass = ConfigUtils.isDefault(className) ?
-                    ReflectUtils.forName(interfaceClass.getName() + label) : ReflectUtils.forName(className);
-                        verify(interfaceClass, localClass);
-            }
+                ReflectUtils.forName(interfaceClass.getName() + label) : ReflectUtils.forName(className);
+            verify(interfaceClass, localClass);
+        }
     }
 
     private void verify(Class<?> interfaceClass, Class<?> localClass) {
         if (!interfaceClass.isAssignableFrom(localClass)) {
             throw new IllegalStateException("The local implementation class " + localClass.getName() +
-                    " not implement interface " + interfaceClass.getName());
+                " not implement interface " + interfaceClass.getName());
         }
 
         try {
@@ -464,7 +478,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             ReflectUtils.findConstructor(localClass, interfaceClass);
         } catch (NoSuchMethodException e) {
             throw new IllegalStateException("No such constructor \"public " + localClass.getSimpleName() +
-                    "(" + interfaceClass.getName() + ")\" in local implementation class " + localClass.getName());
+                "(" + interfaceClass.getName() + ")\" in local implementation class " + localClass.getName());
         }
     }
 
@@ -532,7 +546,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             }
         }
     }
-    
+
     protected void computeValidRegistryIds() {
         if (application != null && notHasSelfRegistryProperty()) {
             setRegistries(application.getRegistries());
@@ -649,8 +663,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
 
     /**
-     * @deprecated Use {@link AbstractInterfaceConfig#setScopeModel(ScopeModel)}
      * @param application
+     * @deprecated Use {@link AbstractInterfaceConfig#setScopeModel(ScopeModel)}
      */
     @Deprecated
     public void setApplication(ApplicationConfig application) {
@@ -668,8 +682,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
 
     /**
-     * @deprecated Use {@link AbstractInterfaceConfig#setScopeModel(ScopeModel)}
      * @param module
+     * @deprecated Use {@link AbstractInterfaceConfig#setScopeModel(ScopeModel)}
      */
     @Deprecated
     public void setModule(ModuleConfig module) {
@@ -886,7 +900,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     public String getVersion(AbstractInterfaceConfig interfaceConfig) {
         return StringUtils.isEmpty(getVersion()) ? (interfaceConfig != null ? interfaceConfig.getVersion() : getVersion()) : getVersion();
     }
-    
+
     public String getVersion() {
         return version;
     }
@@ -902,11 +916,11 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     public void setGroup(String group) {
         this.group = group;
     }
-    
+
     public String getInterface() {
         return interfaceName;
     }
-    
+
     public void setInterface(String interfaceName) {
         this.interfaceName = interfaceName;
     }

@@ -66,6 +66,9 @@ import static org.apache.dubbo.common.utils.ReflectUtils.findMethodByMethodSigna
 import static org.apache.dubbo.config.Constants.PARAMETERS;
 
 /**
+ * 抽象的配置类型，也是最顶层的服务配置类型，封装着解析配置的使用方法和公共方法，
+ * 比如服务id的设置，服务标签名字的处理，服务参数的添加，属性的提取等等
+ *
  * Utility methods and public methods for parsing configuration
  *
  * @export
@@ -388,15 +391,30 @@ public abstract class AbstractConfig implements Serializable {
     }
 
     public final void setScopeModel(ScopeModel scopeModel) {
+        //第一次初始化的当前成员变量是空的可以设置变量
         if (this.scopeModel != scopeModel) {
+            // 检查参数是否合法
             checkScopeModel(scopeModel);
+            // 初始化对象
             ScopeModel oldScopeModel = this.scopeModel;
             this.scopeModel = scopeModel;
             // reinitialize spi extension and change referenced config's scope model
+
+            /**
+             * 被子类重写的方法,根据多态会调用具体子类型的这个方法我们下面来看
+             * 子类应该重写此方法以初始化其SPI扩展并更改引用的配置的范围模型。
+             *
+             * 当ScopeModel模型对象发生了改变,上面调用了postProcessAfterScopeModelChanged方法来通知模型对象改变的时候要执行的操作,
+             * 根据多态重写的逻辑我们从实现类的postProcessAfterScopeModelChanged来看,
+             * 在下面的调用链路中部分父类型并未实现postProcessAfterScopeModelChanged方法我们就直接忽略了
+             */
             this.postProcessAfterScopeModelChanged(oldScopeModel, this.scopeModel);
         }
     }
 
+    /**
+     * 检查ScopeModel参数是否合法,合法的参数是不能为空并且必须是ApplicationModel类型或者子类型
+     */
     protected void checkScopeModel(ScopeModel scopeModel) {
         if (scopeModel == null) {
             throw new IllegalArgumentException("scopeModel cannot be null");
@@ -407,6 +425,8 @@ public abstract class AbstractConfig implements Serializable {
     }
 
     /**
+     *  这个方法什么也没干只是在父类型创建的模版方法让子类型来重写用的
+     *
      * Subclass should override this method to initialize its SPI extensions and change referenced config's scope model.
      * <p>
      * For example:
