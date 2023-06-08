@@ -256,8 +256,8 @@ public class ExtensionLoader<T> {
     /**
      * This is equivalent to {@code getActivateExtension(url, key, null)}
      *
-     * @param url url
-     * @param key url parameter key which used to get extension point names
+     * @param url url 服务的url
+     * @param key url parameter key which used to get extension point names  用于获取扩展点名称的url参数键 比如监听器:exporter.listener,过滤器:params-filter,telnet处理器:telnet
      * @return extension list which are activated.
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String, String)
      */
@@ -280,9 +280,9 @@ public class ExtensionLoader<T> {
     /**
      * This is equivalent to {@code getActivateExtension(url, url.getParameter(key).split(","), null)}
      *
-     * @param url   url
-     * @param key   url parameter key which used to get extension point names
-     * @param group group
+     * @param url   url 服务的url
+     * @param key   url parameter key which used to get extension point names      用于获取扩展点名称的url参数键 比如监听器:exporter.listener,过滤器:params-filter,telnet处理器:telnet
+     * @param group group     用于筛选的分组,比如过滤器中使用此参数来区分消费者使用这个过滤器还是提供者使用这个过滤器他们的group参数分表为consumer,provider
      * @return extension list which are activated.
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String[], String)
      */
@@ -292,26 +292,33 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 获取激活扩展
      * Get activate extensions.
      *
-     * @param url    url
-     * @param values extension point names
-     * @param group  group
-     * @return extension list which are activated
+     * @param url      服务的url
+     * @param values extension point names   这个value是扩展点的名字 当指定了时候会使用指定的名字的扩展
+     * @param group  group    用于筛选的分组,比如过滤器中使用此参数来区分消费者使用这个过滤器还是提供者使用这个过滤器他们的group参数分表为consumer,provider
+     * @return extension list which are activated   获取激活扩展.
      * @see org.apache.dubbo.common.extension.Activate
      */
     @SuppressWarnings("deprecation")
     public List<T> getActivateExtension(URL url, String[] values, String group) {
+        // 检查扩展加载器是否被销毁了
         checkDestroyed();
         // solve the bug of using @SPI's wrapper method to report a null pointer exception.
+        // 创建个有序的Map集合,用来对扩展进行排序
         Map<Class<?>, T> activateExtensionsMap = new TreeMap<>(activateComparator);
+        // 初始化扩展名字,指定了扩展名字values不为空
         List<String> names = values == null ? new ArrayList<>(0) : asList(values);
+        // 扩展名字使用Set集合进行去重
         Set<String> namesSet = new HashSet<>(names);
+        // 参数常量是 -default  扩展名字是否不包含默认的
         if (!namesSet.contains(REMOVE_VALUE_PREFIX + DEFAULT_KEY)) {
             if (cachedActivateGroups.size() == 0) {
                 synchronized (cachedActivateGroups) {
                     // cache all extensions
                     if (cachedActivateGroups.size() == 0) {
+                        // 加载扩展类型对应的扩展类,这个具体细节参考源码或者《[Dubbo3.0.7源码解析系列]-5-Dubbo的SPI扩展机制与自适应扩展对象的创建与扩展文件的扫描源码解析》章节
                         getExtensionClasses();
                         for (Map.Entry<String, Object> entry : cachedActivates.entrySet()) {
                             String name = entry.getKey();
@@ -319,6 +326,7 @@ public class ExtensionLoader<T> {
 
                             String[] activateGroup, activateValue;
 
+                            // 遍历所有的activates列表获取group()和value()值
                             if (activate instanceof Activate) {
                                 activateGroup = ((Activate) activate).group();
                                 activateValue = ((Activate) activate).value();
@@ -328,6 +336,7 @@ public class ExtensionLoader<T> {
                             } else {
                                 continue;
                             }
+                            // 缓存分组值
                             cachedActivateGroups.put(name, new HashSet<>(Arrays.asList(activateGroup)));
                             String[][] keyPairs = new String[activateValue.length][];
                             for (int i = 0; i < activateValue.length; i++) {
@@ -341,6 +350,7 @@ public class ExtensionLoader<T> {
                                     keyPairs[i][0] = activateValue[i];
                                 }
                             }
+                            // 缓存指定扩展信息
                             cachedActivateValues.put(name, keyPairs);
                         }
                     }
@@ -348,12 +358,19 @@ public class ExtensionLoader<T> {
             }
 
             // traverse all cached extensions
+            // 遍历所有激活的扩展名字和扩展分组集合
             cachedActivateGroups.forEach((name, activateGroup) -> {
+                //筛选当前扩展的扩展分组与激活扩展的扩展分组是否可以匹配
                 if (isMatchGroup(group, activateGroup)
+                    //不能是指定的扩展名字
                     && !namesSet.contains(name)
+                    //也不能是带有 -指定扩展名字
                     && !namesSet.contains(REMOVE_VALUE_PREFIX + name)
+                    //如果在Active注解中配置了value则当指定的键出现在URL的参数中时，激活当前扩展名。
+                    //如果未配置value属性则默认都是匹配的(cachedActivateValues中不存在对应扩展名字的缓存的时候默认为true)
                     && isActive(cachedActivateValues.get(name), url)) {
 
+                    //缓存激活的扩展类型映射的扩展名字
                     activateExtensionsMap.put(getExtensionClass(name), getExtension(name));
                 }
             });
