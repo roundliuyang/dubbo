@@ -22,6 +22,7 @@ import org.apache.dubbo.rpc.model.ScopeModel;
 import org.apache.dubbo.rpc.model.ScopeModelAware;
 
 /**
+ * 域模型中的Bean扩展注入器
  * Inject scope bean to SPI extension instance
  */
 public class ScopeBeanExtensionInjector implements ExtensionInjector, ScopeModelAware {

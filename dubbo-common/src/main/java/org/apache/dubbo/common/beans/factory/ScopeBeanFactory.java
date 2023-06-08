@@ -189,8 +189,10 @@ public class ScopeBeanFactory {
     }
 
     public <T> T getBean(String name, Class<T> type) {
+        // 当前域下注册的扩展对象
         T bean = getBeanInternal(name, type);
         if (bean == null && parent != null) {
+            // 父域中查找扩展对象
             return parent.getBean(name, type);
         }
         return bean;

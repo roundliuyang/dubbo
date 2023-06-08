@@ -81,11 +81,12 @@ public class SpringExtensionInjector implements ExtensionInjector, Lifecycle {
             return null;
         }
 
-        //check @SPI annotation
+        //check @SPI annotation 类型需要满足SPI机制 @SPI修饰的接口
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {
             return null;
         }
 
+        // 从Spring容器中查询Bean
         T bean = getOptionalBean(context, name, type);
         if (bean != null) {
             return bean;
@@ -96,7 +97,9 @@ public class SpringExtensionInjector implements ExtensionInjector, Lifecycle {
     }
 
     private <T> T getOptionalBean(ListableBeanFactory beanFactory, String name, Class<T> type) {
+        //要搜索的扩展名字为空就根据类型搜索
         if (StringUtils.isEmpty(name)) {
+            //返回与给定类型（包括子类）匹配的bean的名称，对于FactoryBeans
             String[] beanNamesForType = beanFactory.getBeanNamesForType(type, true, false);
             if (beanNamesForType != null) {
                 if (beanNamesForType.length == 1) {
