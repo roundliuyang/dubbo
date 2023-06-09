@@ -49,11 +49,16 @@ public class Application {
 
         // 这个DubboBootstrap就是用来启动Dubbo服务的.类似于Netty的Bootstrap类型和ServerBootstrap启动器
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
+        // 初始化应用配置
         bootstrap.application(new ApplicationConfig("dubbo-demo-api-provider"))
+            // 初始化注册中心配置
             .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
+            // 初始化协议配置
             .protocol(new ProtocolConfig(CommonConstants.DUBBO, -1))
+            // 初始化服务配置
             .service(service)
             .start()
+            // 启动
             .await();
     }
 

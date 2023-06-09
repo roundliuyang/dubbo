@@ -159,19 +159,38 @@ public class ConfigUtils {
     }
 
     /**
+     * 完整的配置加载流程这里用简单的话描述下:
+     *
+     *  -项目内配置查询
+     *      -路径查询
+     *          -从JVM参数中获取配置的 dubbo.properties.file配置文件路径
+     *          -如果前面未获取到路径则从环境变量参数中获取配置的dubbo.properties.file配置文件路径
+     *          -如果前面未获取到路径则使用默认路径dubbo.propertie
+     *      -配置加载
+     *          -将路径转为FileInputStream 然后使用Properties加载
+     *  -依赖中的配置扫描查询
+     *      -使用类加载器扫描所有资源URL
+     *      -url转InputStream 如 url.openStream() 然后使用Properties加载
      * Get dubbo properties.
      * It is not recommended using this method to modify dubbo properties.
      *
      * @return
      */
     public static Properties getProperties(Set<ClassLoader> classLoaders) {
+        // 这个配置的KEY是dubbo.properties.file System.getProperty是从JVM参数中获取配置的 一般情况下我们在启动Java进程的时候会指定Dubbo配置文件 如配置:
+        // -Ddubbo.properties.file=/dubbo.properties
         String path = System.getProperty(CommonConstants.DUBBO_PROPERTIES_KEY);
         if (StringUtils.isEmpty(path)) {
+            // 优先级最高的JVM参数拿不到数据则从 环境变量中获取,这个配置key也是dubbo.properties.file  System.getenv是从环境变量中获取数据
+            // 例如我们在环境变量中配置 dubbo.properties.file=/dubbo.properties
             path = System.getenv(CommonConstants.DUBBO_PROPERTIES_KEY);
             if (StringUtils.isEmpty(path)) {
+                // 如果在JVM参数和环境变量都拿不到这个配置文件的路径我们就用默认的吧
+                // 默认的路径是类路径下的资源文件 这个路径是: dubbo.properties
                 path = CommonConstants.DEFAULT_DUBBO_PROPERTIES;
             }
         }
+        // 路径获取之后加载详细的配置内容:
         return ConfigUtils.loadProperties(classLoaders, path, false, true);
     }
 
@@ -212,6 +231,7 @@ public class ConfigUtils {
     public static Properties loadProperties(Set<ClassLoader> classLoaders, String fileName, boolean allowMultiFile, boolean optional) {
         Properties properties = new Properties();
         // add scene judgement in windows environment Fix 2557
+        // 检查文件是否存在 直接加载配置文件如果加载到了配置文件则直接返回
         if (checkFileNameExist(fileName)) {
             try {
                 FileInputStream input = new FileInputStream(fileName);
@@ -226,11 +246,13 @@ public class ConfigUtils {
             return properties;
         }
 
+        // 为什么会有下面的逻辑呢,如果仅仅使用上面的加载方式只能加载到本系统下的配置文件,无法加载封装在jar中的根路径的配置
         Set<java.net.URL> set = null;
         try {
             List<ClassLoader> classLoadersToLoad = new LinkedList<>();
             classLoadersToLoad.add(ClassUtils.getClassLoader());
             classLoadersToLoad.addAll(classLoaders);
+            // 这个方法loadResources在扩展加载的时候说过
             set = ClassLoaderResourceLoader.loadResources(fileName, classLoadersToLoad).values().stream().reduce(new LinkedHashSet<>(), (a, i) -> {
                 a.addAll(i);
                 return a;

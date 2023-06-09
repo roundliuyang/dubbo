@@ -36,6 +36,7 @@ public class PropertiesConfiguration implements Configuration {
     }
 
     public void refresh() {
+        // 配置获取的过程是借助工具类ConfigUtils来获取的
         properties = ConfigUtils.getProperties(scopeModel.getClassLoaders());
     }
 

@@ -171,26 +171,35 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
      */
     @Override
     public void initialize() {
+        // 状态判断，如果已经初始化过了就直接返回
         if (initialized) {
             return;
         }
         // Ensure that the initialization is completed when concurrent calls
+        // 启动锁，确保在并发调用时完成初始化
         synchronized (startLock) {
+            // 双重校验锁，如果已经初始化过了就直接返回
             if (initialized) {
                 return;
             }
             // register shutdown hook
+            // 注册关闭钩子，这个逻辑基本每个中间件应用都必须要要做的事情了，正常关闭应用回收资源，一般没这个逻辑情况下容易出现一些异常，让我们开发人员很疑惑，而这个逻辑往往并不好处理的干净。
             registerShutdownHook();
 
+            // 启动配置中心，感觉Dubbo3耦合了这个玩意
             startConfigCenter();
 
+            // 加载配置，一般配置信息当前机器的来源：环境变量，JVM启动参数，配置文字
             loadApplicationConfigs();
 
+            // 初始化模块发布器 （发布服务提供和服务引用使用）
             initModuleDeployers();
 
             // @since 2.7.8
+            // 启动元数据中心
             startMetadataCenter();
 
+            // 初始化完成
             initialized = true;
 
             if (logger.isInfoEnabled()) {
@@ -220,46 +229,66 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
     private void startConfigCenter() {
 
         // load application config
+        // 加载应用程序配置 （配置可能有多个地方可以配置需要遵循Dubbo约定的优先级进行设置，也可能是多应用，多注册中心这样的配置）
         configManager.loadConfigsOfTypeFromProps(ApplicationConfig.class);
 
         // try set model name
         if (StringUtils.isBlank(applicationModel.getModelName())) {
+            // 设置一下模块名字和模块描述（我们再Debug里面经常会看到这个描述信息 toString直接返回了Dubbo为我们改造的对象信息）
             applicationModel.setModelName(applicationModel.tryGetApplicationName());
         }
 
         // load config centers
+        // 加载配置中心配置
+        // 配置可能有多个地方可以配置需要遵循Dubbo约定的优先级进行设置，也可能是多应用，多注册中心这样的配置）
         configManager.loadConfigsOfTypeFromProps(ConfigCenterConfig.class);
 
+        // 出于兼容性目的，如果没有明确指定配置中心，并且registryConfig的UseAConfigCenter为null或true，请使用registry作为默认配置中心
         useRegistryAsConfigCenterIfNecessary();
 
         // check Config Center
+        // 配置管理器中获取配置中心
         Collection<ConfigCenterConfig> configCenters = configManager.getConfigCenters();
+        // 配置中心配置不为空则刷新配置中心配置将其放入配置管理器中
+        // 下面开始刷新配置中心配置,如果配置中心配置为空则执行空刷新
         if (CollectionUtils.isEmpty(configCenters)) {
+            // 配置中心不存在的配置刷新
             ConfigCenterConfig configCenterConfig = new ConfigCenterConfig();
             configCenterConfig.setScopeModel(applicationModel);
             configCenterConfig.refresh();
+            // 验证配置
             ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
             if (configCenterConfig.isValid()) {
+                // 配置合法则将配置放入配置管理器中
                 configManager.addConfigCenter(configCenterConfig);
                 configCenters = configManager.getConfigCenters();
             }
         } else {
+            // 一个或者多个配置中心配置存在的情况下的配置刷新
             for (ConfigCenterConfig configCenterConfig : configCenters) {
                 configCenterConfig.refresh();
+                // 验证配置
                 ConfigValidationUtils.validateConfigCenterConfig(configCenterConfig);
             }
         }
 
+        // 配置中心配置不为空则将配置中心配置添加到environment中
         if (CollectionUtils.isNotEmpty(configCenters)) {
+            // 多配置中心本地动态配置对象创建CompositeDynamicConfiguration
             CompositeDynamicConfiguration compositeDynamicConfiguration = new CompositeDynamicConfiguration();
+            // 获取配置中心的相关配置
             for (ConfigCenterConfig configCenter : configCenters) {
                 // Pass config from ConfigCenterBean to environment
+                // 将配置中心的外部化配置,更新到环境里面
                 environment.updateExternalConfigMap(configCenter.getExternalConfiguration());
+                // 将配置中心的应用配置,添加到环境里面
                 environment.updateAppExternalConfigMap(configCenter.getAppExternalConfiguration());
 
                 // Fetch config from remote config center
+                // 从配置中心拉取配置添加到组合配置中
                 compositeDynamicConfiguration.addConfiguration(prepareEnvironment(configCenter));
             }
+            // 将配置中心中的动态配置信息 设置到environment的动态配置属性中
             environment.setDynamicConfiguration(compositeDynamicConfiguration);
         }
     }
@@ -299,27 +328,36 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
      */
     private void useRegistryAsConfigCenterIfNecessary() {
         // we use the loading status of DynamicConfiguration to decide whether ConfigCenter has been initiated.
+        // 我们使用DynamicConfiguration的加载状态来决定是否已启动ConfigCenter。配置中心配置加载完成之后会初始化动态配置defaultDynamicConfiguration
         if (environment.getDynamicConfiguration().isPresent()) {
             return;
         }
 
+        // 从配置缓存中查询是否存在config-center相关配置 ,如果已经存在配置了就无需使用注册中心的配置地址直接返回
         if (CollectionUtils.isNotEmpty(configManager.getConfigCenters())) {
             return;
         }
 
         // load registry
+        // 加载注册中心相关配置
         configManager.loadConfigsOfTypeFromProps(RegistryConfig.class);
 
+        // 查询是否有注册中心设置了默认配置isDefault 设置为true的注册中心则为默认注册中心列表,如果没有注册中心设置为默认注册中心,则获取所有未设置默认配置的注册中心列
         List<RegistryConfig> defaultRegistries = configManager.getDefaultRegistries();
+        // 存在注册中心
         if (defaultRegistries.size() > 0) {
             defaultRegistries
                 .stream()
+                // 判断当前注册中心是否可以作为配置中心
                 .filter(this::isUsedRegistryAsConfigCenter)
+                // 将注册中心配置映射转换为配置中心
                 .map(this::registryAsConfigCenter)
+                // 遍历配置中心流
                 .forEach(configCenter -> {
                     if (configManager.getConfigCenter(configCenter.getId()).isPresent()) {
                         return;
                     }
+                    // 配置管理器中添加配置中心,方便后去读取配置中心的配置信息
                     configManager.addConfigCenter(configCenter);
                     logger.info("use registry as config-center: " + configCenter);
 
@@ -333,11 +371,18 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
     }
 
     private ConfigCenterConfig registryAsConfigCenter(RegistryConfig registryConfig) {
+        // 注册中心协议获取这里例子中的是zookeeper协议
         String protocol = registryConfig.getProtocol();
+        // 注册中心端口 2181
         Integer port = registryConfig.getPort();
+        // 在Dubbo中配置信息 很多情况下都以URL形式表示,这里转换后的地址为zookeeper://127.0.0.1:2181
         URL url = URL.valueOf(registryConfig.getAddress(), registryConfig.getScopeModel());
+        // 生成当前配置中心的id 封装之后的内容为:
+        // config-center-zookeeper-127.0.0.1-2181
         String id = "config-center-" + protocol + "-" + url.getHost() + "-" + port;
+        // 配置中心配置对象创建
         ConfigCenterConfig cc = new ConfigCenterConfig();
+        // config-center-zookeeper-127.0.0.1-2181
         cc.setId(id);
         cc.setScopeModel(applicationModel);
         if (cc.getParameters() == null) {
@@ -347,18 +392,26 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
             cc.getParameters().putAll(registryConfig.getParameters()); // copy the parameters
         }
         cc.getParameters().put(CLIENT_KEY, registryConfig.getClient());
+        // zookeeper
         cc.setProtocol(protocol);
+        // 2181
         cc.setPort(port);
         if (StringUtils.isNotEmpty(registryConfig.getGroup())) {
             cc.setGroup(registryConfig.getGroup());
         }
+        // 这个方法转换地址是修复bug用的可以看bug https://github.com/apache/dubbo/issues/6476
         cc.setAddress(getRegistryCompatibleAddress(registryConfig));
+        // 注册中心分组做为配置中心命名空间 这里为null
         cc.setNamespace(registryConfig.getGroup());
+        // zk认证信息
         cc.setUsername(registryConfig.getUsername());
+        // zk认证信息
         cc.setPassword(registryConfig.getPassword());
         if (registryConfig.getTimeout() != null) {
             cc.setTimeout(registryConfig.getTimeout().longValue());
         }
+        // 这个属性注释中已经建议了已经弃用了默认就是false了
+        // 如果配置中心被赋予最高优先级，它将覆盖所有其他配置，
         cc.setHighestPriority(false);
         return cc;
     }
@@ -419,19 +472,26 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
                                            String centerType,
                                            Class<?> extensionClass) {
         final boolean supported;
-
+        // 这个useAsConfigCenter参数是来自注册中心的配置 如果配置了这个值则以这个值为准,如果配置了false则这个注册中心不能做为配置中心
         Boolean configuredValue = usedRegistryAsCenter.get();
         if (configuredValue != null) { // If configured, take its value.
             supported = configuredValue.booleanValue();
         } else {                       // Or check the extension existence
+            // 这个逻辑的话是判断下注册中心的协议是否满足要求,我们例子代码中使用的是zookeeper
             String protocol = registryConfig.getProtocol();
+            // 这个扩展是否支持的逻辑判断是这样的扫描扩展类 看一下当前扩展类型是否有对应协议的扩展 比如在扩展文件里面这样配置过后是支持的 protocol=xxxImpl
+            // 动态配置的扩展类型为:interface org.apache.dubbo.common.config.configcenter.DynamicConfigurationFactory
+            // zookeeper协议肯定是支持的因为zookeeper协议实现了这个动态配置工厂 ,这个扩展类型为ZookeeperDynamicConfigurationFactory
+            // 代码位置在dubbo-configcenter-zookeeper包中的org.apache.dubbo.common.config.configcenter.DynamicConfigurationFactory扩展配置中内容为zookeeper=org.apache.dubbo.configcenter.support.zookeeper.ZookeeperDynamicConfigurationFactory
             supported = supportsExtension(extensionClass, protocol);
+            // 配置中心走注册中心会打印一条日志
             if (logger.isInfoEnabled()) {
                 logger.info(format("No value is configured in the registry, the %s extension[name : %s] %s as the %s center"
                     , extensionClass.getSimpleName(), protocol, supported ? "supports" : "does not support", centerType));
             }
         }
 
+        // 配置中心走注册中心会打印一条日志
         if (logger.isInfoEnabled()) {
             logger.info(format("The registry[%s] will be %s as the %s center", registryConfig,
                 supported ? "used" : "not used", centerType));
@@ -505,36 +565,47 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
      */
     @Override
     public Future start() {
+        // 启动锁，防止重复启动
         synchronized (startLock) {
+            // 发布器，状态已经设置为停止或者失败了就直接抛出异常
             if (isStopping() || isStopped() || isFailed()) {
                 throw new IllegalStateException(getIdentifier() + " is stopping or stopped, can not start again");
             }
 
             try {
                 // maybe call start again after add new module, check if any new module
+                // 可能在添加新模块后再次调用start，检查是否有任何新模块
+                // 这里遍历当前应用程序下的所有模块如果某个模块是PENDING状态则这里hasPendingModule的值为true
                 boolean hasPendingModule = hasPendingModule();
 
+                // 发布器状态正在启动中
                 if (isStarting()) {
                     // currently, is starting, maybe both start by module and application
                     // if it has new modules, start them
                     if (hasPendingModule) {
+                        // 启动模块
                         startModules();
                     }
                     // if it is starting, reuse previous startFuture
+                    // 模块异步启动中
                     return startFuture;
                 }
 
                 // if is started and no new module, just return
+                // 如果已启动且没有新模块，直接返回
                 if (isStarted() && !hasPendingModule) {
                     return CompletableFuture.completedFuture(false);
                 }
 
                 // pending -> starting : first start app
                 // started -> starting : re-start app
+                // 启动状态切换，将启动状态切换到STARTING（pending和started状态无需切换）
                 onStarting();
 
+                // 核心初始化逻辑，这里主要做一些应用级别启动比如配置中心，元数据中心
                 initialize();
 
+                // 启动模块（我们的服务提供和服务引用是在这个模块级别的）
                 doStart();
             } catch (Throwable e) {
                 onFailed(getIdentifier() + " start failure", e);
@@ -593,11 +664,15 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
 
     private void startModules() {
         // ensure init and start internal module first
+        // 确保初始化并首先启动内部模块,Dubbo3中将模块分为内部和外部，内部是核心代码已经提供的一些服务比如元数据服务，外部是我们自己写的服务
         prepareInternalModule();
 
         // filter and start pending modules, ignore new module during starting, throw exception of module start
+        // 启动所有的模块 （启动所有的服务）
         for (ModuleModel moduleModel : new ArrayList<>(applicationModel.getModuleModels())) {
+            // 这个状态默认就是PENDING的
             if (moduleModel.getDeployer().isPending()) {
+                // 模块启动器，发布服务
                 moduleModel.getDeployer().start();
             }
         }

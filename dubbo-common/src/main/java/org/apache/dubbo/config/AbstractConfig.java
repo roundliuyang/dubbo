@@ -670,8 +670,10 @@ public abstract class AbstractConfig implements Serializable {
         refreshed.set(true);
         try {
             // check and init before do refresh
+            // 刷新之前执行的逻辑 这里并做什么逻辑
             preProcessRefresh();
 
+            // 获取当前域模型的环境信息对象
             Environment environment = getScopeModel().getModelEnvironment();
             List<Map<String, String>> configurationMaps = environment.getConfigurationMaps();
 

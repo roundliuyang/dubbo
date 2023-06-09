@@ -126,22 +126,29 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
 
     @Override
     public synchronized Future start() throws IllegalStateException {
+        // 模块发布器已经停止或者启动失败则直接抛出异常返回
         if (isStopping() || isStopped() || isFailed()) {
             throw new IllegalStateException(getIdentifier() + " is stopping or stopped, can not start again");
         }
 
         try {
+            // 启动中或者已经启动了则直接返回一个Future对象
             if (isStarting() || isStarted()) {
                 return startFuture;
             }
 
+            // 切换模块启动状态为STARTING
             onModuleStarting();
 
             // initialize
+            // 如果应用未初始化则初始化（非正常逻辑）
             applicationDeployer.initialize();
+
+            // 模块发布器进行初始化
             initialize();
 
             // export services
+            // 暴露服务
             exportServices();
 
             // prepare application instance
@@ -151,12 +158,15 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
             }
 
             // refer services
+            // 引用服务
             referServices();
 
             // if no async export/refer services, just set started
+            // 非异步启动则直接切换状态为STARTED
             if (asyncExportingFutures.isEmpty() && asyncReferringFutures.isEmpty()) {
                 onModuleStarted();
             } else {
+                // 如果是异步的则等待服务发布和服务引用异步回调
                 frameworkExecutorRepository.getSharedExecutor().submit(() -> {
                     try {
                         // wait for export finish
@@ -166,6 +176,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
                     } catch (Throwable e) {
                         logger.warn("wait for export/refer services occurred an exception", e);
                     } finally {
+                        // 异步回调完成 所有服务都启动了，再切换状态
                         onModuleStarted();
                     }
                 });

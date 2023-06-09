@@ -229,6 +229,7 @@ public final class DubboBootstrap {
      * Start dubbo application and wait for finish
      */
     public DubboBootstrap start() {
+        // 调用重载的方法进行启动参数代表是否等待启动结束
         this.start(true);
         return this;
     }
@@ -239,11 +240,14 @@ public final class DubboBootstrap {
      * @return
      */
     public DubboBootstrap start(boolean wait) {
+        // 这个发布器是在ApplicationModel对象创建之后初始化的时候进行初始化的具体类型为DefaultApplicationDeployer
         Future future = applicationDeployer.start();
         if (wait) {
             try {
+                // 等待异步启动的结果
                 future.get();
             } catch (Exception e) {
+                // 启动失败则抛出一个异常
                 throw new IllegalStateException("await dubbo application start finish failure", e);
             }
         }
