@@ -43,9 +43,11 @@ public class Application {
     private static void startWithBootstrap() {
         // 创建一个服务配置对象
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
+        // 为服务配置下服务接口和服务实现,下面两行用来初始化对象就不详细说了
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());
 
+        // 这个DubboBootstrap就是用来启动Dubbo服务的.类似于Netty的Bootstrap类型和ServerBootstrap启动器
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
         bootstrap.application(new ApplicationConfig("dubbo-demo-api-provider"))
             .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))

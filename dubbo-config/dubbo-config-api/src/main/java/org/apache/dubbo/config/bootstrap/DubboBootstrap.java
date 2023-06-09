@@ -65,6 +65,11 @@ import java.util.function.Consumer;
 import static java.util.Collections.singletonList;
 
 /**
+ * Dubbo的bootstrap类为啥要用单例模式:
+ * 通过调用静态方法getInstance()获取单例实例。之所以设计为单例，是因为Dubbo中的一些类（如ExtensionLoader）只为每个进程设计一个实例。
+ *
+ *
+ *
  * See {@link ApplicationModel} and {@link ExtensionLoader} for why this class is designed to be singleton.
  * <p>
  * The bootstrap class of Dubbo
@@ -105,9 +110,13 @@ public final class DubboBootstrap {
      * See {@link ApplicationModel} and {@link ExtensionLoader} for why DubboBootstrap is designed to be singleton.
      */
     public static DubboBootstrap getInstance() {
+        // 双重校验锁第一次判断空
         if (instance == null) {
+            // 为空都进行排队
             synchronized (DubboBootstrap.class) {
+                // 双重校验锁第二次判断空 上面为空的都排队了这里得判断下
                 if (instance == null) {
+                    // 调用重载方法获取对象
                     instance = DubboBootstrap.getInstance(ApplicationModel.defaultModel());
                 }
             }
@@ -116,6 +125,8 @@ public final class DubboBootstrap {
     }
 
     public static DubboBootstrap getInstance(ApplicationModel applicationModel) {
+        // computeIfAbsent() 方法对 hashMap 中指定 key 的值进行重新计算，如果不存在这个 key，则添加到 hashMap 中。
+        // instanceMap设计为Map<ApplicationModel, DubboBootstrap>类型 Key,意味着可以为多个应用程序模型创建不同的启动器,启动多个服务
         return instanceMap.computeIfAbsent(applicationModel, _k -> new DubboBootstrap(applicationModel));
     }
 
@@ -158,13 +169,19 @@ public final class DubboBootstrap {
     }
 
     private DubboBootstrap(ApplicationModel applicationModel) {
+        // 存储应用程序启动模型
         this.applicationModel = applicationModel;
+        // 获取配置管理器ConfigManager:  配置管理器的扩展类型ApplicationExt ,扩展名字confi
         configManager = applicationModel.getApplicationConfigManager();
+        // 获取环境信息Environment: 环境信息的扩展类型为ApplicationExt,扩展名字为environment
         environment = applicationModel.getModelEnvironment();
 
+        // 执行器存储仓库(线程池)ExecutorRepository: 扩展类型为ExecutorRepository,默认扩展扩展名字为default
         executorRepository = applicationModel.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
+        // 初始化并启动应用程序实例ApplicationDeployer,DefaultApplicationDeployer类型
         applicationDeployer = applicationModel.getDeployer();
         // listen deploy events
+        // 为发布器 设置生命周期回调
         applicationDeployer.addDeployListener(new DeployListenerAdapter<ApplicationModel>() {
             @Override
             public void onStarted(ApplicationModel scopeModel) {
@@ -182,6 +199,7 @@ public final class DubboBootstrap {
             }
         });
         // register DubboBootstrap bean
+        // 将启动器对象注册到应用程序模型applicationModel的Bean工厂中
         applicationModel.getBeanFactory().registerBean(this);
     }
 
@@ -423,7 +441,9 @@ public final class DubboBootstrap {
      * @return current {@link DubboBootstrap} instance
      */
     public DubboBootstrap application(ApplicationConfig applicationConfig) {
+        // 将启动器构造器中初始化的默认应用程序模型对象 传递 给配置对象
         applicationConfig.setScopeModel(applicationModel);
+        // 将配置信息添加到配置管理器中
         configManager.setApplication(applicationConfig);
         return this;
     }
@@ -461,7 +481,9 @@ public final class DubboBootstrap {
      * @return current {@link DubboBootstrap} instance
      */
     public DubboBootstrap registry(RegistryConfig registryConfig) {
+        // 将applicationModel对象设置给注册中心配置对象
         registryConfig.setScopeModel(applicationModel);
+        // 将注册中心配置对象 添加到 配置管理器中
         configManager.addRegistry(registryConfig);
         return this;
     }
@@ -493,6 +515,7 @@ public final class DubboBootstrap {
     }
 
     public DubboBootstrap protocol(ProtocolConfig protocolConfig) {
+         // 配置信息转list
         return protocols(singletonList(protocolConfig));
     }
 
