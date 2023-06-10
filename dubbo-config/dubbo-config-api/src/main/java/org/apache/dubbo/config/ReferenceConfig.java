@@ -86,6 +86,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.PEER_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.REFER_KEY;
 
 /**
+ * 引用服务的逻辑其实是相对复杂一点的，包含了服务发现，引用对象的创建等等
  * Please avoid using this class for any new application,
  * use {@link ReferenceConfigBase} instead.
  */
@@ -210,8 +211,12 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             throw new IllegalStateException("The invoker of ReferenceConfig(" + url + ") has already destroyed!");
         }
 
+        // ref类型为 transient volatile T ref;
         if (ref == null) {
             // ensure start module, compatible with old api usage
+            // 这个前面已经调用了模块发布器启动过了，这里有这么一行代码是有一定作用的，如果使用方直接调用了ReferenceConfigBase的get方法或者
+            // 缓存对象SimpleReferenceCache类型的对象的get方法来引用服务端的时候就会造成很多配置没有初始化下面执行逻辑的时候出现问题，
+            // 这个代码其实就是启动模块进行一些基础配置的初始化操作 比如元数据中心默认配置选择，注册中心默认配置选择这些都是比较重要的
             getScopeModel().getDeployer().start();
 
             synchronized (this) {
@@ -247,49 +252,64 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     }
 
     protected synchronized void init() {
+        // 初始化标记变量保证只初始化一次，这里又是加锁🔐又是加标记变量的
         if (initialized) {
             return;
         }
         initialized = true;
 
+        // 刷新配置
         if (!this.isRefreshed()) {
             this.refresh();
         }
 
         // init serviceMetadata
+        // 初始化ServiceMetadata类型对象serviceMetadata 为其设置服务基本属性比如版本号，分组，服务接口名
         initServiceMetadata(consumer);
 
+        // 继续初始化元数据信息 服务接口类型和key
         serviceMetadata.setServiceType(getServiceInterfaceClass());
         // TODO, uncomment this line once service key is unified
         serviceMetadata.setServiceKey(URL.buildKey(interfaceName, group, version));
 
+        // 配置转Map类型
         Map<String, String> referenceParameters = appendConfig();
         // init service-application mapping
+        // 来自本地存储和url参数的初始化映射。 参数转URL配置初始化 Dubbo中喜欢用url作为配置的一种处理方式
         initServiceAppsMapping(referenceParameters);
 
+        // 本地内存模块服务存储库
         ModuleServiceRepository repository = getScopeModel().getServiceRepository();
+        // ServiceModel和ServiceMetadata在某种程度上是相互重复的。我们将来应该合并它们。
         ServiceDescriptor serviceDescriptor;
         if (CommonConstants.NATIVE_STUB.equals(getProxy())) {
             serviceDescriptor = StubSuppliers.getServiceDescriptor(interfaceName);
             repository.registerService(serviceDescriptor);
         } else {
+            // 本地存储库注册服务接口类型
             serviceDescriptor = repository.registerService(interfaceClass);
         }
+        // 消费者模型对象
         consumerModel = new ConsumerModel(serviceMetadata.getServiceKey(), proxy, serviceDescriptor, this,
             getScopeModel(), serviceMetadata, createAsyncMethodInfo());
 
+        // 本地存储库注册消费者模型对象
         repository.registerConsumer(consumerModel);
 
+        // 与前面代码一样基础初始化服务元数据对象为其设置附加参数
         serviceMetadata.getAttachments().putAll(referenceParameters);
 
+        // 创建服务的代理对象 ！！！核心代码在这里
         ref = createProxy(referenceParameters);
 
+        // 为服务元数据对象设置代理对象
         serviceMetadata.setTarget(ref);
         serviceMetadata.addAttribute(PROXY_CLASS_REF, ref);
 
         consumerModel.setProxyObject(ref);
         consumerModel.initMethodModels();
 
+        // 检查invoker对象初始结果
         checkInvokerAvailable();
     }
 
@@ -381,19 +401,24 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
     @SuppressWarnings({"unchecked"})
     private T createProxy(Map<String, String> referenceParameters) {
+        // 本地引用 这里为false
         if (shouldJvmRefer(referenceParameters)) {
             createInvokerForLocal(referenceParameters);
         } else {
             urls.clear();
             if (StringUtils.isNotEmpty(url)) {
                 // user specified URL, could be peer-to-peer address, or register center's address.
+                // url存在则为点对点引用
                 parseUrl(referenceParameters);
             } else {
                 // if protocols not in jvm checkRegistry
+                // 这里不是local协议默认这里为空
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
+                    // 从注册表中获取URL并将其聚合。这个其实就是初始化一下注册中心的url配置
                     aggregateUrlFromRegistry(referenceParameters);
                 }
             }
+            // 这个代码非常重要 创建远程引用，创建远程引用调用器
             createInvokerForRemote();
         }
 
@@ -489,8 +514,11 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void createInvokerForRemote() {
+        // 这个url 为注册协议如registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        // ?application=dubbo-demo-api-consumer&dubbo=2.0.2&pid=6204&qos.enable=false&qos.port=-1&registry=zookeeper&release=3.0.9&timestamp=1657439419495
         if (urls.size() == 1) {
             URL curUrl = urls.get(0);
+            // 这个SPI对象是由字节码动态生成的自适应对象Protocol$Adaptie直接看看不到源码，后续可以解析一个字节码生成的类型，这里后续来调用链路即可
             invoker = protocolSPI.refer(interfaceClass, curUrl);
             if (!UrlUtils.isRegistry(curUrl)) {
                 List<Invoker<?>> invokers = new ArrayList<>();

@@ -475,7 +475,10 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        // 这个url已经被转换为具体的注册中心协议类型了
+        // zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-consumer&dubbo=2.0.2&pid=7944&qos.enable=false&qos.port=-1&release=3.0.9&timestamp=1657440673100
         url = getRegistryUrl(url);
+        // 获取用于操作Zookeeper的Registry类型
         Registry registry = getRegistry(url);
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
@@ -490,7 +493,10 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             }
         }
 
+        // 降级容错的逻辑处理对象 类型为Cluster 实际类型为MockClusterWrapper 内部包装的是FailoverCluster
+        // 后续调用服务失败时候会先失效转移再降级
         Cluster cluster = Cluster.getCluster(url.getScopeModel(), qs.get(CLUSTER_KEY));
+        // 这里才是具体的Invoker对象的创建
         return doRefer(cluster, registry, type, url, qs);
     }
 
@@ -508,7 +514,10 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             consumerAttribute
         );
         url = url.putAttribute(CONSUMER_URL_KEY, consumerUrl);
+        // 重点看这一行 带迁移性质的Invoker对象
         ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);
+        // 这一行回来执行迁移规则创建应用级优先的服务发现Invoker对象。
+        // 比较核心也是Dubbo3比较重要的消费者启动逻辑基本都在这个方法里面interceptInvoker，这个方法执行了消费者应用级发现和接口级发现迁移的逻辑，会自动帮忙决策一个Invoker类型对象，
         return interceptInvoker(migrationInvoker, url, consumerUrl);
     }
 
@@ -533,12 +542,14 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
      * @return The @param MigrationInvoker passed in
      */
     protected <T> Invoker<T> interceptInvoker(ClusterInvoker<T> invoker, URL url, URL consumerUrl) {
+        // 获取激活的注册协议监听器扩展里面registry.protocol.listener，这里激活的类型为MigrationRuleListener
         List<RegistryProtocolListener> listeners = findRegistryProtocolListeners(url);
         if (CollectionUtils.isEmpty(listeners)) {
             return invoker;
         }
 
         for (RegistryProtocolListener listener : listeners) {
+            // 这里执行MigrationRuleListener类型的onRefer方法
             listener.onRefer(this, invoker, consumerUrl, url);
         }
         return invoker;

@@ -66,6 +66,11 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
 
     private final ModuleConfigManager configManager;
 
+    /**
+     * 一个用于缓存引用ReferenceConfigBase的util工具类。 ReferenceConfigBase是一个重对象，对于频繁创建ReferenceConfigBase的框架来说，
+     * 有必要缓存这些对象。 如果需要使用复杂的策略，可以实现并使用自己的ReferenceConfigBase缓存 这个Cache是引用服务的开始如果我们想在代码中自定义一些服务引用的逻辑，
+     * 可以直接创建SimpleReferenceCache类型对象然后调用其get方法进行引用服务。
+     */
     private final SimpleReferenceCache referenceCache;
 
     private ApplicationDeployer applicationDeployer;
@@ -381,10 +386,12 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
     }
 
     private void referServices() {
+        // 这个是获取配置的所有的ReferenceConfigBase类型对象
         configManager.getReferences().forEach(rc -> {
             try {
                 ReferenceConfig<?> referenceConfig = (ReferenceConfig<?>) rc;
                 if (!referenceConfig.isRefreshed()) {
+                    // 刷新引用配置
                     referenceConfig.refresh();
                 }
 
@@ -393,6 +400,7 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
                         ExecutorService executor = executorRepository.getServiceReferExecutor();
                         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                             try {
+                                // 间接的通过缓存对象来引用服务配置
                                 referenceCache.get(rc);
                             } catch (Throwable t) {
                                 logger.error(getIdentifier() + " refer async catch error : " + t.getMessage(), t);
@@ -401,11 +409,13 @@ public class DefaultModuleDeployer extends AbstractDeployer<ModuleModel> impleme
 
                         asyncReferringFutures.add(future);
                     } else {
+                        // 间接的通过缓存对象来引用服务配置
                         referenceCache.get(rc);
                     }
                 }
             } catch (Throwable t) {
                 logger.error(getIdentifier() + " refer catch error.");
+                // 出现异常销毁引用配置
                 referenceCache.destroy(rc);
                 throw t;
             }

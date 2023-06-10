@@ -240,7 +240,9 @@ public class MigrationInvoker<T> implements MigrationClusterInvoker<T> {
     @Override
     public void migrateToApplicationFirstInvoker(MigrationRule newRule) {
         CountDownLatch latch = new CountDownLatch(0);
+        // 刷新接口级服务发现Invoker
         refreshInterfaceInvoker(latch);
+        // 刷新应用级服务发现Invoker类型对象
         refreshServiceDiscoveryInvoker(latch);
 
         // directly calculate preferred invoker, will not wait until address notify

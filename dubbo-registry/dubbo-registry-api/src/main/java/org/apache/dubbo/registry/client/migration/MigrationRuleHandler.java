@@ -38,22 +38,26 @@ public class MigrationRuleHandler<T> {
     }
 
     public synchronized void doMigrate(MigrationRule rule) {
+        // 默认情况下这个类型是MigrationInvoker
         if (migrationInvoker instanceof ServiceDiscoveryMigrationInvoker) {
             refreshInvoker(MigrationStep.FORCE_APPLICATION, 1.0f, rule);
             return;
         }
 
+        // 迁移步骤，MigrationStep 一共有3种枚举情况：FORCE_INTERFACE, APPLICATION_FIRST, FORCE_APPLICATION
         // initial step : APPLICATION_FIRST
         MigrationStep step = MigrationStep.APPLICATION_FIRST;
         float threshold = -1f;
 
         try {
+            // 获取配置的类型 默认走APPLICATION_FIRST
             step = rule.getStep(consumerURL);
             threshold = rule.getThreshold(consumerURL);
         } catch (Exception e) {
             logger.error("Failed to get step and threshold info from rule: " + rule, e);
         }
 
+        // 刷洗调用器对象 来进行决策服务发现模式
         if (refreshInvoker(step, threshold, rule)) {
             // refresh success, update rule
             setMigrationRule(rule);
@@ -68,14 +72,25 @@ public class MigrationRuleHandler<T> {
 
         if ((currentStep == null || currentStep != step) || !currentThreshold.equals(threshold)) {
             boolean success = true;
+            /**
+             * 可以看到这个代码做了判断的逻辑分别对应了Dubbo3消费者迁移的一个状态逻辑： 三种状态分别如下枚举类型： 当前共存在三种状态，
+             * FORCE_INTERFACE（强制接口级）
+             * APPLICATION_FIRST（应用级优先）
+             * FORCE_APPLICATION（强制应用级）
+             * 通过代码我们可以看到默认情况下都会走APPLICATION_FIRST（应用级优先）的策略，
+             * 这里我们也重点来说 APPLICATION_FIRST（应用级优先）来看下Dubbo3是如何决策使用接口级还是应用级发现模型来兼容迁移的服务的
+             */
             switch (step) {
                 case APPLICATION_FIRST:
+                    // 默认和配置了应用级优先的服务发现则走这里
                     migrationInvoker.migrateToApplicationFirstInvoker(newRule);
                     break;
                 case FORCE_APPLICATION:
+                    // 配置了应用级服务发现则走这里
                     success = migrationInvoker.migrateToForceApplicationInvoker(newRule);
                     break;
                 case FORCE_INTERFACE:
+                    // 配置了接口级服务发现则走这里
                 default:
                     success = migrationInvoker.migrateToForceInterfaceInvoker(newRule);
             }
