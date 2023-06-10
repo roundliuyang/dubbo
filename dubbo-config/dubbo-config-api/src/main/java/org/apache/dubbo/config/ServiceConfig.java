@@ -209,40 +209,53 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
      * for early init serviceMetadata
      */
     public void init() {
+        // 加载服务监听器 这里暂时没有服务监听器扩展
         if (this.initialized.compareAndSet(false, true)) {
             // load ServiceListeners from extension
             ExtensionLoader<ServiceListener> extensionLoader = this.getExtensionLoader(ServiceListener.class);
             this.serviceListeners.addAll(extensionLoader.getSupportedExtensionInstances());
         }
+        // 服务提供者配置传递给元数据配置对象 一个服务提供者配置会有一个元数据配置，服务配置
         initServiceMetadata(provider);
+        // 元数据
         serviceMetadata.setServiceType(getInterfaceClass());
         serviceMetadata.setTarget(getRef());
+        // 元数据的key格式为 group/服务接口:版本号
         serviceMetadata.generateServiceKey();
     }
 
     @Override
     public void export() {
+        // 已经导出过服务直接放那会
         if (this.exported) {
             return;
         }
 
         // ensure start module, compatible with old api usage
+        // 确保模块启动了(基本的初始化操作执行了)
         getScopeModel().getDeployer().start();
 
+        // 悲观锁
         synchronized (this) {
+            // 双重校验
             if (this.exported) {
                 return;
             }
 
+            // 配置是否刷新 前面初始化时候已经刷新过配置
             if (!this.isRefreshed()) {
                 this.refresh();
             }
+            //服务导出配置配置为false则不导出
             if (this.shouldExport()) {
+                // 服务发布前初始化一下元数据对象
                 this.init();
 
                 if (shouldDelay()) {
+                    // 配置了服务的延迟发布配置则走延迟发布逻辑
                     doDelayExport();
                 } else {
+                    // 导出服务
                     doExport();
                 }
             }
@@ -361,40 +374,60 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     protected synchronized void doExport() {
+        // 取消发布
         if (unexported) {
             throw new IllegalStateException("The service " + interfaceClass.getName() + " has already unexported!");
         }
+        // 已经发布
         if (exported) {
             return;
         }
 
+        // 服务路径 为空则设置为接口名，本例子中为link.elastic.dubbo.entity.DemoService
         if (StringUtils.isEmpty(path)) {
             path = interfaceName;
         }
+        // 导出URL
         doExportUrls();
         exported();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        // 模块服务存储库
         ModuleServiceRepository repository = getScopeModel().getServiceRepository();
         ServiceDescriptor serviceDescriptor;
+        // ref为服务实现类型 这里对应我们例子的DemoServiceImpl
         final boolean serverService = ref instanceof ServerService;
         if(serverService){
             serviceDescriptor=((ServerService) ref).getServiceDescriptor();
             repository.registerService(serviceDescriptor);
         }else{
+            // 我们代码走这个逻辑 注册服务 这个注册不是向注册中心注册 这个是解析服务接口将服务方法等描述信息存放在了服务存储ModuleServiceRepository类型对象的成员变量services中
             serviceDescriptor = repository.registerService(getInterfaceClass());
         }
+        // 提供者领域模型， 提供者领域模型 封装了一些提供者需要的就基本属性同时内部解析封装方法信息 ProviderMethodModel 列表 ， 服务标识符 格式group/服务接:版本号
         providerModel = new ProviderModel(getUniqueServiceName(),
+            // 服务实现类DemoServiceImpl
             ref,
+            // 服务描述符 描述符里面包含了服务接口的方法信息，不过服务接口通过反射也可以拿到方法信息
             serviceDescriptor,
+            // 服务配置
             this,
+            // 当前所处模型
             getScopeModel(),
+            // 当前服务接口的元数据对象
             serviceMetadata);
 
+        // 模块服务存储库存储提供者模型对象ModuleServiceRepository
         repository.registerProvider(providerModel);
 
+        // 获取配置的注册中心列表 ，同时将注册中心配置转URL （在Dubbo中URL就是配置信息的一种形式）
+        // 这里会获取到两个  由dubbo.application.register-mode 双注册配置决定
+        // 注册中心 registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=9008&registry=zookeeper&release=3.0.8&timestamp=1653703292768
+        // service-discovery-registry://8.131.79.126:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=10275&registry=zookeeper&release=3.0.8&timestamp=1653704425920
+        // 参数dubbo是dubbo协议的版本不是Dubbo版本 Dubbo RPC protocol version, for compatibility, it must not be between 2.0.10 ~ 2.6.2
+        // 这里后面详细说下 服务双注册  dubbo.application.register-mode
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
         for (ProtocolConfig protocolConfig : protocols) {
@@ -404,22 +437,36 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             // stub service will use generated service name
             if(!serverService) {
                 // In case user specified path, register service one more time to map it to path.
+                // 模块服务存储库ModuleServiceRepository存储服务接口信息
                 repository.registerService(pathKey, interfaceClass);
             }
+            // 导出服务配置到本地和注册中心
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
 
+    /**
+     *
+     * @param protocolConfig dubbo协议的配置 <dubbo:protocol port="-1" name=“dubbo” />
+     * @param registryURLs 目前有两个 应用级注册地址和接口级注册地址
+     *                     registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=9008&registry=zookeeper&release=3.0.8&timestamp=1653703292768
+     *                     service-discovery-registry://8.131.79.126:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=10275&registry=zookeeper&release=3.0.8&timestamp=1653704425920
+     */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
+        // 生成协议配置具体可见下图中的元数据配置中的attachment
         Map<String, String> map = buildAttributes(protocolConfig);
 
         // remove null key and null value
+        // 移除空值 简化配置
         map.keySet().removeIf(key -> key == null || map.get(key) == null);
         // init serviceMetadata attachments
+        // 协议配置放到元数据对象中
         serviceMetadata.getAttachments().putAll(map);
 
+        // 协议配置 + 默认协议配置转URL类型的配置存储
         URL url = buildUrl(protocolConfig, map);
 
+        // 导出url
         exportUrl(url, registryURLs);
     }
 
@@ -582,10 +629,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
             // export to local if the config is not remote (export to remote only when config is remote)
+            // 未明确指定远程导出 则开启本地导出
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
 
+            // 未明确指定本地导出 则开启远程导出
             // export to remote if the config is not local (export to local only when config is local)
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 url = exportRemote(url, registryURLs);
@@ -597,9 +646,18 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         this.urls.add(url);
     }
 
+    /**
+     *
+     * @param url dubbo://192.168.1.9:20880/link.elastic.dubbo.entity.DemoService?anyhost=true&application=dubbo-demo-api-provider&background=false&bind.ip=192.168.1.9&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=link.elastic.dubbo.entity.DemoService&methods=sayHello,sayHelloAsync&pid=12865&release=3.0.8&side=provider&timestamp=1653708351378
+     * @param registryURLs 目前有两个 应用级注册地址和接口级注册地址
+     *                     registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=9008&registry=zookeeper&release=3.0.8&timestamp=1653703292768
+     *                     service-discovery-registry://8.131.79.126:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&pid=10275&registry=zookeeper&release=3.0.8&timestamp=1653704425920
+     */
     private URL exportRemote(URL url, List<URL> registryURLs) {
+        // 遍历所有注册地址与注册模式 逐个注册
         if (CollectionUtils.isNotEmpty(registryURLs)) {
             for (URL registryURL : registryURLs) {
+                // 为协议URL 添加应用级注册service-discovery-registry参数service-name-mapping为true
                 if (SERVICE_REGISTRY_PROTOCOL.equals(registryURL.getProtocol())) {
                     url = url.addParameterIfAbsent(SERVICE_NAME_MAPPING_KEY, "true");
                 }
@@ -609,7 +667,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     continue;
                 }
 
+                // 为协议url 添加动态配置dynamic
                 url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
+                // 监控配置暂时为null
                 URL monitorUrl = ConfigValidationUtils.loadMonitor(this, registryURL);
                 if (monitorUrl != null) {
                     url = url.putAttribute(MONITOR_KEY, monitorUrl);
@@ -621,6 +681,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                 }
 
+                // 开始注册服务了 打印个认知 提示下
                 if (logger.isInfoEnabled()) {
                     if (url.getParameter(REGISTER_KEY, true)) {
                         logger.info("Register dubbo service " + interfaceClass.getName() + " url " + url + " to registry " + registryURL.getAddress());
@@ -647,19 +708,24 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrl(URL url, boolean withMetaData) {
+        // 这里是由adaptor扩展类型处理过的 我们直接看默认的类型javassist 对应JavassistProxyFactory代理工厂 获取调用对象
         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
         if (withMetaData) {
+            // 远程服务导出逐个值为true 元数据invoker包装一下
             invoker = new DelegateProviderMetaDataInvoker(invoker, this);
         }
+        // 使用协议导出调用对象 export
         Exporter<?> exporter = protocolSPI.export(invoker);
         exporters.add(exporter);
     }
 
 
     /**
+     * 本地调用使用了 injvm 协议，是一个伪协议，它不开启端口，不发起远程调用，只在 JVM 内直接关联，但执行 Dubbo 的 Filter 链。
      * always export injvm
      */
     private void exportLocal(URL url) {
+        // 协议转为injvm 代表本地导出 host为127.0.0.1
         URL local = URLBuilder.from(url)
                 .setProtocol(LOCAL_PROTOCOL)
                 .setHost(LOCALHOST_VALUE)

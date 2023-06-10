@@ -28,8 +28,10 @@ import org.apache.dubbo.rpc.model.ApplicationModel;
  */
 public class ZookeeperMetadataReportFactory extends AbstractMetadataReportFactory {
 
+    // 与Zookeeper交互的传输器
     private ZookeeperTransporter zookeeperTransporter;
 
+    // 应用程序模型
     private ApplicationModel applicationModel;
 
     public ZookeeperMetadataReportFactory(ApplicationModel applicationModel) {

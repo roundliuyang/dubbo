@@ -309,13 +309,17 @@ public class DubboProtocol extends AbstractProtocol {
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         checkDestroyed();
+        // 服务提供者的url参考例子dubbo://192.168.1.9:20880/link.elastic.dubbo.entity.DemoService?anyhost=true&application=dubbo-demo-api-provider&background=false&bind.ip=192.168.1.9&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=link.elastic.dubbo.entity.DemoService&methods=sayHello,sayHelloAsync&pid=6043&release=3.0.8&service-name-mapping=true&side=provider&timestamp=1654224285437
         URL url = invoker.getUrl();
 
         // export service.
+        // 生成服务的key参考：link.elastic.dubbo.entity.DemoService:20880
         String key = serviceKey(url);
+        // 创建导出服务用的导出器DubboExporter
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
 
         //export a stub service for dispatching event
+        // stub配置校验
         Boolean isStubSupportEvent = url.getParameter(STUB_EVENT_KEY, DEFAULT_STUB_EVENT);
         Boolean isCallbackservice = url.getParameter(IS_CALLBACK_SERVICE, false);
         if (isStubSupportEvent && !isCallbackservice) {
@@ -329,6 +333,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        // 创建服务开启服务端口,这里就到了RPC协议的TCP通信模块了，对应DubboProtocol 的 openServer(url);方法
         openServer(url);
         optimizeSerialization(url);
 
@@ -337,13 +342,15 @@ public class DubboProtocol extends AbstractProtocol {
 
     private void openServer(URL url) {
         checkDestroyed();
-        // find server.
+        // find server. 地址作为key这里是192.168.1.9:20880
         String key = url.getAddress();
         // client can export a service which only for server to invoke
+        // 默认提供者开启服务，消费者是不能开启服务的
         boolean isServer = url.getParameter(IS_SERVER_KEY, true);
         if (isServer) {
             ProtocolServer server = serverMap.get(key);
             if (server == null) {
+                // 协议服务器 下面一个双重校验锁检查，如果为空则创建服务
                 synchronized (this) {
                     server = serverMap.get(key);
                     if (server == null) {
@@ -366,6 +373,7 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     private ProtocolServer createServer(URL url) {
+        // 下面将url增加了心跳参数最终如下dubbo://192.168.1.9:20880/link.elastic.dubbo.entity.DemoService?anyhost=true&application=dubbo-demo-api-provider&background=false&bind.ip=192.168.1.9&bind.port=20880&channel.readonly.sent=true&codec=dubbo&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&heartbeat=60000&interface=link.elastic.dubbo.entity.DemoService&methods=sayHello,sayHelloAsync&pid=6700&release=3.0.8&service-name-mapping=true&side=provider&timestamp=1654225251112
         url = URLBuilder.from(url)
                 // send readonly event when server closes, it's enabled by default
                 .addParameterIfAbsent(CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())
@@ -373,14 +381,18 @@ public class DubboProtocol extends AbstractProtocol {
                 .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))
                 .addParameter(CODEC_KEY, DubboCodec.NAME)
                 .build();
+        // 这里服务端使用的网络库这里是默认值netty
         String str = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
 
         if (StringUtils.isNotEmpty(str) && !url.getOrDefaultFrameworkModel().getExtensionLoader(Transporter.class).hasExtension(str)) {
             throw new RpcException("Unsupported server type: " + str + ", url: " + url);
         }
 
+        // dubbo交换器层对象创建
         ExchangeServer server;
         try {
+            // 这个方法会绑定端口，关于交换器与传输网络层到后面统一说
+            // 这里通过绑定url和请求处理器来创建交换器对象
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
@@ -395,6 +407,7 @@ public class DubboProtocol extends AbstractProtocol {
         }
 
         DubboProtocolServer protocolServer = new DubboProtocolServer(server);
+        // 关闭等待时长默认为10秒
         loadServerProperties(protocolServer);
         return protocolServer;
     }

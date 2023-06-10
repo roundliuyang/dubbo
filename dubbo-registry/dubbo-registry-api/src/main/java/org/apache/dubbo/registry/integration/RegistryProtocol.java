@@ -230,6 +230,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
+        // override配置
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         Map<URL, NotifyListener> overrideListeners = getProviderConfigurationListener(providerUrl).getOverrideListeners();
         overrideListeners.put(registryUrl, overrideSubscribeListener);
@@ -239,11 +240,15 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
+        // 通过URL获取 注册中心Registry操作对象
         final Registry registry = getRegistry(registryUrl);
+        // 需要向注册中心注册地址转换
+        // dubbo://192.168.1.9:20880/link.elastic.dubbo.entity.DemoService?anyhost=true&application=dubbo-demo-api-provider&background=false&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=link.elastic.dubbo.entity.DemoService&methods=sayHello,sayHelloAsync&pid=14656&release=3.0.8&service-name-mapping=true&side=provider&timestamp=1653711086189
         final URL registeredProviderUrl = getUrlToRegistry(providerUrl, registryUrl);
 
         // decide if we need to delay publish (provider itself and registry should both need to register)
         boolean register = providerUrl.getParameter(REGISTER_KEY, true) && registryUrl.getParameter(REGISTER_KEY, true);
+        // 是否向注册中心注册
         if (register) {
             register(registry, registeredProviderUrl);
         }
@@ -260,6 +265,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
             registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
         }
 
+        // 内置监听器通知 这个不是通知消费者的
         notifyExport(exporter);
         //Ensure that a new exporter instance is returned every time export
         return new DestroyableExporter<>(exporter);
@@ -291,6 +297,7 @@ public class RegistryProtocol implements Protocol, ScopeModelAware {
 
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
+            // 代码中用的这个protoco对象是dubbo自动生成的适配器对象protocol$Adaptive 适配器对象会根据当前协议的参数来查询具体的协议扩展对象
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
         });
     }
