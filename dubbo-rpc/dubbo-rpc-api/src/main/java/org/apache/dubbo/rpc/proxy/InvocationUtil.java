@@ -36,16 +36,26 @@ public class InvocationUtil {
     private static final Logger logger = LoggerFactory.getLogger(InvokerInvocationHandler.class);
 
     public static Object invoke(Invoker<?> invoker, RpcInvocation rpcInvocation) throws Throwable {
+
+        // consumer://172.26.240.92/org.apache.dubbo.demo.DemoService?application=dubbo-demo-api-consumer&background=false&dubbo=2.0.2&generic=true&interface=org.apache.dubbo.demo.DemoService&pid=11028&register.ip=172.26.240.92&release=&side=consumer&sticky=false&timestamp=1686478196792
         URL url = invoker.getUrl();
+
+        // org.apache.dubbo.demo.DemoService
         String serviceKey = url.getServiceKey();
         rpcInvocation.setTargetServiceUniqueName(serviceKey);
 
         // invoker.getUrl() returns consumer url.
         RpcServiceContext.getServiceContext().setConsumerUrl(url);
 
+        // 默认前后开启性能分析
         if (ProfilerSwitch.isEnableSimpleProfiler()) {
+            // 创建一个InternalThreadLocal<ProfilerEntry> bizProfiler线程本地对象来存储性能信息
+            // 首次进入这个性能实体为空
             ProfilerEntry parentProfiler = Profiler.getBizProfiler();
             ProfilerEntry bizProfiler;
+
+            // 首次为空走下面逻辑创建个性能分析实体
+            // 这里如果是第二个调用invoker方法则将性能数据串起来前面的放到parent ProfilerEntry 内部用链表结构实现一个性能链路
             if (parentProfiler != null) {
                 bizProfiler = Profiler.enter(parentProfiler,
                     "Receive request. Client invoke begin. ServiceKey: " + serviceKey + " MethodName:" + rpcInvocation.getMethodName());
@@ -54,6 +64,7 @@ public class InvocationUtil {
             }
             rpcInvocation.put(Profiler.PROFILER_KEY, bizProfiler);
             try {
+                // 第一个invoker类型为MigrationInvoker。其实前面我们已经说过是如何决策应用级还是接口级的调用默认走应用级下面直接看应用级相关的invoker链路
                 return invoker.invoke(rpcInvocation).recreate();
             } finally {
                 Profiler.release(bizProfiler);

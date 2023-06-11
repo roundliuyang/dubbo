@@ -318,6 +318,7 @@ public interface FilterChainBuilder {
             Result asyncResult;
             try {
                 InvocationProfilerUtils.enterDetailProfiler(invocation, () -> "Filter " + filter.getClass().getName() + " invoke.");
+                // 然后走第一个过滤器ConsumerContextFilter
                 asyncResult = filter.invoke(nextNode, invocation);
             } catch (Exception e) {
                 InvocationProfilerUtils.releaseDetailProfiler(invocation);

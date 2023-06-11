@@ -135,6 +135,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     /**
+     * 负载均衡算法执行
      * Select a invoker using loadbalance policy.</br>
      * a) Firstly, select an invoker using loadbalance. If this invoker is in previously selected list, or,
      * if this invoker is unavailable, then continue step b (reselect), otherwise return the first selected invoker</br>
@@ -329,9 +330,11 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
 //        }
 
         InvocationProfilerUtils.enterDetailProfiler(invocation, () -> "Router route.");
+        // 从服务目录里面根据路由规则动态查询invoke服务提供者的调用器
         List<Invoker<T>> invokers = list(invocation);
         InvocationProfilerUtils.releaseDetailProfiler(invocation);
 
+        // 获取负载均衡策略默认为随机RandomLoadBalance
         LoadBalance loadbalance = initLoadBalance(invokers, invocation);
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
 

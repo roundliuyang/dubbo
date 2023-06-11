@@ -52,12 +52,19 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
         super(directory);
     }
 
+    /**
+     * 执行具有失效转移功能的FailoverClusterInvoker类型的doInvoke方法
+     * @param invocation
+     * @param invokers
+     * @param loadbalance
+     */
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         List<Invoker<T>> copyInvokers = invokers;
         checkInvokers(copyInvokers, invocation);
         String methodName = RpcUtils.getMethodName(invocation);
+        // 重试次数计算默认为3
         int len = calculateInvokeTimes(methodName);
         // retry loop.
         RpcException le = null; // last exception.

@@ -175,10 +175,10 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
         RpcInvocation invocation = (RpcInvocation) inv;
 
-        // prepare rpc invocation
+        // prepare rpc invocation  准备调用初始化一些变量
         prepareInvocation(invocation);
 
-        // do invoke rpc invocation and return async result
+        // do invoke rpc invocation and return async result   执行调用
         AsyncRpcResult asyncResult = doInvokeAndReturn(invocation);
 
         // wait rpc result if sync

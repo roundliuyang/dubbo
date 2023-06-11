@@ -87,6 +87,12 @@ public abstract class AbstractCluster implements Cluster {
             }
         }
 
+        /**
+         *  接下来要走的逻辑是默认类AbstractCluster的invoke方法
+         * @param invocation
+         * @return
+         * @throws RpcException
+         */
         @Override
         public Result invoke(Invocation invocation) throws RpcException {
             return filterInvoker.invoke(invocation);

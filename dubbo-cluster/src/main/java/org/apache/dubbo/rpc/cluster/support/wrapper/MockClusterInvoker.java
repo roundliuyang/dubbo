@@ -87,10 +87,14 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
         return directory.getInterface();
     }
 
+    /**
+     * 接下来要走的Invoker逻辑是带有容错逻辑的MockClusterInvoker的invoker
+     */
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
         Result result;
 
+        // 判断是否开启服务容错逻辑mock 默认是没有开启的
         String value = getUrl().getMethodParameter(invocation.getMethodName(), MOCK_KEY, Boolean.FALSE.toString()).trim();
         if (ConfigUtils.isEmpty(value)) {
             //no mock
