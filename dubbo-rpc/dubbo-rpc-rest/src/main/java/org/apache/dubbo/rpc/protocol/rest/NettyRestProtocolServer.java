@@ -38,6 +38,7 @@ import static org.apache.dubbo.rpc.protocol.rest.Constants.DEFAULT_KEEP_ALIVE;
 import static org.apache.dubbo.rpc.protocol.rest.Constants.KEEP_ALIVE_KEY;
 
 /**
+ * 基于 Netty 的 HTTP 服务器实现类
  * Netty server can't support @Context injection of servlet objects since it's not a servlet container
  *
  */
@@ -47,11 +48,12 @@ public class NettyRestProtocolServer extends BaseRestProtocolServer {
 
     @Override
     protected void doStart(URL url) {
+        // 设置 NettyJaxrsServer 的属性
         String bindIp = url.getParameter(BIND_IP_KEY, url.getHost());
         if (!url.isAnyHost() && NetUtils.isValidLocalHost(bindIp)) {
-            server.setHostname(bindIp);
+            server.setHostname(bindIp);      // Hostname
         }
-        server.setPort(url.getParameter(BIND_PORT_KEY, url.getPort()));
+        server.setPort(url.getParameter(BIND_PORT_KEY, url.getPort()));      // port
         Map<ChannelOption, Object> channelOption = new HashMap<ChannelOption, Object>();
         channelOption.put(ChannelOption.SO_KEEPALIVE, url.getParameter(KEEP_ALIVE_KEY, DEFAULT_KEEP_ALIVE));
         server.setChildChannelOptions(channelOption);

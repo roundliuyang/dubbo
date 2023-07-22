@@ -19,15 +19,28 @@ package org.apache.dubbo.rpc.protocol.rest;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.ProtocolServer;
 
+/**
+ * Rest Server 接口
+ */
 public interface RestProtocolServer extends ProtocolServer {
 
+    /**
+     * 启动服务器
+     */
     void start(URL url);
 
     /**
-     * @param resourceDef it could be either resource interface or resource impl
+     *
+     * @param resourceDef   it could be either resource interface or resource impl   服务类
+     * @param resourceInstance  服务对象
+     * @param contextPath  ContextPath
      */
     void deploy(Class resourceDef, Object resourceInstance, String contextPath);
 
+    /**
+     * 取消服务
+     * @param resourceDef 服务类
+     */
     void undeploy(Class resourceDef);
 
 }

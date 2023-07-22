@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 打印日志的 Filter 。目前仅打印请求和响应的 Header
  * This logging filter is not highly optimized for now
  *
  */
