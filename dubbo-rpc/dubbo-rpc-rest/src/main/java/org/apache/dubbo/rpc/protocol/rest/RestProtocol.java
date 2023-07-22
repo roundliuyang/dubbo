@@ -59,8 +59,14 @@ import static org.apache.dubbo.remoting.Constants.DEFAULT_CONNECT_TIMEOUT;
 import static org.apache.dubbo.remoting.Constants.SERVER_KEY;
 import static org.apache.dubbo.rpc.protocol.rest.Constants.EXTENSION_KEY;
 
+/**
+ * 实现 AbstractProxyProtocol 抽象类，rest:// 协议实现类
+ */
 public class RestProtocol extends AbstractProxyProtocol {
 
+    /**
+     * 服务器默认端口
+     */
     private static final int DEFAULT_PORT = 80;
     private static final String DEFAULT_SERVER = "jetty";
 
@@ -70,6 +76,9 @@ public class RestProtocol extends AbstractProxyProtocol {
     private static final int HTTPCLIENTCONNECTIONMANAGER_CLOSEWAITTIME_MS = 1000;
     private static final int HTTPCLIENTCONNECTIONMANAGER_CLOSEIDLETIME_S = 30;
 
+    /**
+     * 服务器工厂，负责创建服务器
+     */
     private final RestServerFactory serverFactory = new RestServerFactory();
 
     // TODO in the future maybe we can just use a single rest client and connection manager
@@ -92,7 +101,9 @@ public class RestProtocol extends AbstractProxyProtocol {
 
     @Override
     protected <T> Runnable doExport(T impl, Class<T> type, URL url) throws RpcException {
+        // 获得服务器地址
         String addr = getAddr(url);
+        // 获得服务真实类名，例如 DemoServiceImpl
         Class implClass = url.getServiceModel().getProxyObject().getClass();
         RestProtocolServer server = (RestProtocolServer) serverMap.computeIfAbsent(addr, restServer -> {
             RestProtocolServer s = serverFactory.createServer(url.getParameter(SERVER_KEY, DEFAULT_SERVER));
