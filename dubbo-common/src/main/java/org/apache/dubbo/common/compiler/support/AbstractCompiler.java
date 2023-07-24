@@ -26,18 +26,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * 实现 Compiler 接口，Compiler 抽象类
  * Abstract compiler. (SPI, Prototype, ThreadSafe)
  */
 public abstract class AbstractCompiler implements Compiler {
 
+    /**
+     * 正则-包名
+     */
     private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([$_a-zA-Z][$_a-zA-Z0-9\\.]*);");
 
+    /**
+     * 正则-类名
+     */
     private static final Pattern CLASS_PATTERN = Pattern.compile("class\\s+([$_a-zA-Z][$_a-zA-Z0-9]*)\\s+");
 
     private static final Map<String, Lock> CLASS_IN_CREATION_MAP = new ConcurrentHashMap<>();
 
     @Override
     public Class<?> compile(Class<?> neighbor, String code, ClassLoader classLoader) {
+        // 获得包名
         code = code.trim();
         Matcher matcher = PACKAGE_PATTERN.matcher(code);
         String pkg;
@@ -46,6 +54,7 @@ public abstract class AbstractCompiler implements Compiler {
         } else {
             pkg = "";
         }
+        // 获得类名
         matcher = CLASS_PATTERN.matcher(code);
         String cls;
         if (matcher.find()) {
@@ -53,6 +62,7 @@ public abstract class AbstractCompiler implements Compiler {
         } else {
             throw new IllegalArgumentException("No such class name in " + code);
         }
+        // 获得完整类名
         String className = pkg != null && pkg.length() > 0 ? pkg + "." + cls : cls;
         Lock lock = CLASS_IN_CREATION_MAP.get(className);
         if (lock == null) {
@@ -61,6 +71,7 @@ public abstract class AbstractCompiler implements Compiler {
         }
         try {
             lock.lock();
+            // 加载成功，说明已存在
             return Class.forName(className, true, classLoader);
         } catch (ClassNotFoundException e) {
             if (!code.endsWith("}")) {

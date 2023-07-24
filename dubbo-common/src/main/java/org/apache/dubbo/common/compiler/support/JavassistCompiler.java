@@ -28,18 +28,35 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * 实现 AbstractCompiler 抽象类，基于 Javassist 实现的 Compiler
  * JavassistCompiler. (SPI, Singleton, ThreadSafe)
  */
 public class JavassistCompiler extends AbstractCompiler {
 
+    /**
+     * 正则-匹配 import
+     */
     private static final Pattern IMPORT_PATTERN = Pattern.compile("import\\s+([\\w\\.\\*]+);\n");
 
+    /**
+     * 正则 - 匹配 extends
+     */
     private static final Pattern EXTENDS_PATTERN = Pattern.compile("\\s+extends\\s+([\\w\\.]+)[^\\{]*\\{\n");
 
+    /**
+     * 正则 - 匹配 implements
+     */
     private static final Pattern IMPLEMENTS_PATTERN = Pattern.compile("\\s+implements\\s+([\\w\\.]+)\\s*\\{\n");
 
+
+    /**
+     * 正则 - 匹配方法
+     */
     private static final Pattern METHODS_PATTERN = Pattern.compile("\n(private|public|protected)\\s+");
 
+    /**
+     * 正则 - 匹配变量
+     */
     private static final Pattern FIELD_PATTERN = Pattern.compile("[^\n]+=[^\n]+;");
 
     @Override
