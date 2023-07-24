@@ -1401,6 +1401,9 @@ public class ExtensionLoader<T> {
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
+    /**
+     * 自动生成自适应拓展的代码实现，并编译后返回该类
+     */
     private Class<?> createAdaptiveExtensionClass() {
         // Adaptive Classes' ClassLoader should be the same with Real SPI interface classes' ClassLoader
         // 获取加载器
