@@ -43,14 +43,21 @@ import static org.apache.dubbo.rpc.Constants.STUB_EVENT_METHODS_KEY;
 import static org.apache.dubbo.rpc.Constants.STUB_KEY;
 
 /**
+ * 存根代理工厂包装器实现类
+ * StubProxyFactoryWrapper 基于 Dubbo SPI Wrapper 机制，所以使用 ProxyFactory 创建代理的流程
  * StubProxyFactoryWrapper
  */
 public class StubProxyFactoryWrapper implements ProxyFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StubProxyFactoryWrapper.class);
-
+    /**
+     * ProxyFactory$Adaptive 对象
+     */
     private final ProxyFactory proxyFactory;
 
+    /**
+     * Protocol$Adaptive 对象
+     */
     private Protocol protocol;
 
     public StubProxyFactoryWrapper(ProxyFactory proxyFactory) {
@@ -63,12 +70,15 @@ public class StubProxyFactoryWrapper implements ProxyFactory {
 
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
+        // 获得 Service Proxy 对象
         T proxy = proxyFactory.getProxy(invoker, generic);
-        if (GenericService.class != invoker.getInterface()) {
+        if (GenericService.class != invoker.getInterface()) {        // 非泛化引用
             URL url = invoker.getUrl();
+            // 获得 `stub` 配置项
             String stub = url.getParameter(STUB_KEY, url.getParameter(LOCAL_KEY));
             if (ConfigUtils.isNotEmpty(stub)) {
                 Class<?> serviceType = invoker.getInterface();
+                // `stub = true` 的情况，使用接口 + `Stub` 字符串。
                 if (ConfigUtils.isDefault(stub)) {
                     if (url.hasParameter(STUB_KEY)) {
                         stub = serviceType.getName() + "Stub";
@@ -77,14 +87,18 @@ public class StubProxyFactoryWrapper implements ProxyFactory {
                     }
                 }
                 try {
+                    // 加载 Stub 类
                     Class<?> stubClass = ReflectUtils.forName(stub);
                     if (!serviceType.isAssignableFrom(stubClass)) {
                         throw new IllegalStateException("The stub implementation class " + stubClass.getName() + " not implement interface " + serviceType.getName());
                     }
                     try {
+                        // 创建 Stub 对象，使用带 Service Proxy 对象作为参数的构造方法。 例如，public DemoServiceStub(DemoService demoService)
+                        // 通过这样的方式，我们的 Stub 对象，就将 Proxy Service 对象，包装在内部，可以实现各种操作啦。
                         Constructor<?> constructor = ReflectUtils.findConstructor(stubClass, serviceType);
                         proxy = (T) constructor.newInstance(new Object[]{proxy});
                         //export stub service
+                        // 参数回调
                         URLBuilder urlBuilder = URLBuilder.from(url);
                         if (url.getParameter(STUB_EVENT_KEY, DEFAULT_STUB_EVENT)) {
                             urlBuilder.addParameter(STUB_EVENT_METHODS_KEY, StringUtils.join(Wrapper.getWrapper(proxy.getClass()).getDeclaredMethodNames(), ","));
@@ -114,6 +128,10 @@ public class StubProxyFactoryWrapper implements ProxyFactory {
         return getProxy(invoker, false);
     }
 
+    /**
+     *
+     * 服务实现的Service,不支持 Stub 存根。所以，虽然 <dubbo:service /> 有 stub 配置项，但是实际是没有效果的。
+     */
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) throws RpcException {
         return proxyFactory.getInvoker(proxy, type, url);
