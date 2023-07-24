@@ -89,6 +89,8 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.SHARE_CONNECTIONS_KE
 
 
 /**
+ * 在 DubboProtocol 类中，实现了自己的 ExchangeHandler 对象，处理请求、消息、连接、断开连接等事件。对于服务消费者的远程调用，
+ * 通过 #reply(ExchangeChannel channel, Object message) 和 #reply(Channel channel, Object message) 方法来处理
  * dubbo protocol support.
  */
 public class DubboProtocol extends AbstractProtocol {
@@ -99,6 +101,9 @@ public class DubboProtocol extends AbstractProtocol {
     private static final String IS_CALLBACK_SERVICE_INVOKE = "_isCallBackServiceInvoke";
 
     /**
+     * 通信客户端集合
+     * key : 服务器地址。  格式为： host:port
+     *
      * <host:port,Exchanger>
      * {@link Map<String, List<ReferenceCountExchangeClient>}
      */
@@ -123,6 +128,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
 
             Invocation inv = (Invocation) message;
+            // 获得请求对应的 Invoker 对象
             Invoker<?> invoker = getInvoker(channel, inv);
             inv.setServiceModel(invoker.getUrl().getServiceModel());
             // switch TCCL
@@ -130,6 +136,7 @@ public class DubboProtocol extends AbstractProtocol {
                 Thread.currentThread().setContextClassLoader(invoker.getUrl().getServiceModel().getClassLoader());
             }
             // need to consider backward-compatibility if it's a callback
+            // 如果是callback 需要处理高版本调用低版本的问题
             if (Boolean.TRUE.toString().equals(inv.getObjectAttachments().get(IS_CALLBACK_SERVICE_INVOKE))) {
                 String methodsStr = invoker.getUrl().getParameters().get("methods");
                 boolean hasMethod = false;
@@ -152,7 +159,9 @@ public class DubboProtocol extends AbstractProtocol {
                     return null;
                 }
             }
+            // 设置调用方的地址
             RpcContext.getServiceContext().setRemoteAddress(channel.getRemoteAddress());
+            // 执行调用
             Result result = invoker.invoke(inv);
             return result.thenApply(Function.identity());
         }

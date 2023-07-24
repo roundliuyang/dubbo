@@ -119,12 +119,14 @@ public class RpcUtils {
     }
 
     public static String getMethodName(Invocation invocation) {
+        // 泛化调用，第一个参数为方法名
         if ($INVOKE.equals(invocation.getMethodName())
                 && invocation.getArguments() != null
                 && invocation.getArguments().length > 0
                 && invocation.getArguments()[0] instanceof String) {
             return (String) invocation.getArguments()[0];
         }
+        // 普通调用，直接获得
         return invocation.getMethodName();
     }
 
@@ -215,6 +217,9 @@ public class RpcUtils {
         }
     }
 
+    /**
+     * 获得是否单向
+     */
     public static boolean isOneway(URL url, Invocation inv) {
         boolean isOneway;
         if (Boolean.FALSE.toString().equals(inv.getAttachment(RETURN_KEY))) {
