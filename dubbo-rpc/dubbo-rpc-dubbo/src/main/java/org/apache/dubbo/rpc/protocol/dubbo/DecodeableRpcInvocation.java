@@ -56,18 +56,37 @@ import static org.apache.dubbo.common.constants.CommonConstants.VERSION_KEY;
 import static org.apache.dubbo.rpc.Constants.SERIALIZATION_ID_KEY;
 import static org.apache.dubbo.rpc.Constants.SERIALIZATION_SECURITY_CHECK_KEY;
 
+/**
+ * 继承 RpcInvocation 类，可解码的RpcInvocation 实现类
+ * 当服务消费者，调用服务提供者，前者编码的RpcInvocation 对象，后者解码成DecodeableRpcInvocation 对象
+ */
 public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Decodeable {
 
     private static final Logger log = LoggerFactory.getLogger(DecodeableRpcInvocation.class);
 
+    /**
+     * 通道
+     */
     private Channel channel;
 
+    /**
+     * Serialization 类型编号
+     */
     private byte serializationType;
 
+    /**
+     * 输入流
+     */
     private InputStream inputStream;
 
+    /**
+     * 请求
+     */
     private Request request;
 
+    /**
+     * 是否已经解码完成
+     */
     private volatile boolean hasDecoded;
 
     protected final FrameworkModel frameworkModel;
@@ -118,6 +137,7 @@ public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Dec
             .deserialize(channel.getUrl(), input);
         this.put(SERIALIZATION_ID_KEY, serializationType);
 
+        // 解码 `dubbo` `path` `version`
         String dubboVersion = in.readUTF();
         request.setVersion(dubboVersion);
         setAttachment(DUBBO_VERSION_KEY, dubboVersion);
@@ -127,6 +147,7 @@ public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Dec
         String version = in.readUTF();
         setAttachment(VERSION_KEY, version);
 
+        // 解码方法、方法签名、方法参数集合
         setMethodName(in.readUTF());
 
         String desc = in.readUTF();
