@@ -28,6 +28,11 @@ import org.apache.dubbo.rpc.RpcException;
 import static org.apache.dubbo.rpc.Constants.$ECHO;
 
 /**
+ * 回声过滤器
+ * 使用 Dubbo SPI Adaptive 机制，自动加载，仅限服务提供者
+ * 如果调用方法是回调调用时，通过方法名( $echo ) 和方法参数数量为 1 ，直接返回方法参数。
+ * 如果调用方法是非回声调用时，调用 Invoker$invoke(invocation) 方法，继续走后面的过滤链
+ *
  * Dubbo provided default Echo echo service, which is available for all dubbo provider service interface.
  */
 @Activate(group = CommonConstants.PROVIDER, order = -110000)
@@ -35,6 +40,7 @@ public class EchoFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
+        // 方法名为 `$echo` ，参数只有一个
         if (inv.getMethodName().equals($ECHO) && inv.getArguments() != null && inv.getArguments().length == 1) {
             return AsyncRpcResult.newDefaultAsyncResult(inv.getArguments()[0], inv);
         }

@@ -36,6 +36,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.$INVOKE;
 import static org.apache.dubbo.rpc.protocol.dubbo.Constants.ASYNC_METHOD_INFO;
 
 /**
+ * 实现 Filter 接口，事件通知过滤器。
  * EventFilter
  */
 @Activate(group = CommonConstants.CONSUMER)
@@ -45,9 +46,11 @@ public class FutureFilter implements ClusterFilter, ClusterFilter.Listener {
 
     @Override
     public Result invoke(final Invoker<?> invoker, final Invocation invocation) throws RpcException {
+        // 触前置方法
         fireInvokeCallback(invoker, invocation);
         // need to configure if there's return value before the invocation in order to help invoker to judge if it's
         // necessary to return future.
+        // 调用方法
         return invoker.invoke(invocation);
     }
 
@@ -65,7 +68,13 @@ public class FutureFilter implements ClusterFilter, ClusterFilter.Listener {
         fireThrowCallback(invoker, invocation, t);
     }
 
+    /**
+     * 触发前置方法
+     * @param invoker Invoker 对象
+     * @param invocation  Invocation 对象
+     */
     private void fireInvokeCallback(final Invoker<?> invoker, final Invocation invocation) {
+        // 获得前置方法和对象
         final AsyncMethodInfo asyncMethodInfo = getAsyncMethodInfo(invoker, invocation);
         if (asyncMethodInfo == null) {
             return;
@@ -83,6 +92,7 @@ public class FutureFilter implements ClusterFilter, ClusterFilter.Listener {
             onInvokeMethod.setAccessible(true);
         }
 
+        // 反射调用前置方法（下面几行）
         Object[] params = invocation.getArguments();
         try {
             onInvokeMethod.invoke(onInvokeInst, params);

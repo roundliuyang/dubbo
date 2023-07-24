@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 /**
+ * 实现 Future 接口，适配 ResponseFuture。通过这样的方式，对上层调用方，透明化 ResponseFuture 的存在
  * 2019-06-20
  */
 @Deprecated
