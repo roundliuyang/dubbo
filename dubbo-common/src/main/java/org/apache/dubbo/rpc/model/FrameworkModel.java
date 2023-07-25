@@ -36,6 +36,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
+ * dubbo 框架模型，可与多个应用程序共享
+ *
+ * 了解了这几个模型对象的关系我们可以了解到这几个模型对象的管理层级从框架到应用程序,然后到模块的管理(FrameworkModel->ApplicationModel->ModuleModel),
+ * 他们主要用来针对框架,应用程序,模块的存储,发布管理,,配置管理
  * Model of dubbo framework, it can be shared with multiple applications.
  */
 public class FrameworkModel extends ScopeModel {
@@ -53,14 +57,29 @@ public class FrameworkModel extends ScopeModel {
 
     private volatile ApplicationModel defaultAppModel;
 
+    /**
+     * FrameworkModel 实例对象集合
+     */
     private static List<FrameworkModel> allInstances = new CopyOnWriteArrayList<>();
 
+    /**
+     * 所有 ApplicationModel 实例对象集合
+     */
     private List<ApplicationModel> applicationModels = new CopyOnWriteArrayList<>();
 
+    /**
+     * 发布的ApplicationModel实例对象集合
+     */
     private List<ApplicationModel> pubApplicationModels = new CopyOnWriteArrayList<>();
 
+    /**
+     * 框架的服务存储库FrameworkServiceRepository类型对象(数据存储在内存中)
+     */
     private FrameworkServiceRepository serviceRepository;
 
+    /**
+     * 内部的应用程序模型对象 internalApplicationModel
+     */
     private ApplicationModel internalApplicationModel;
 
     private Object instLock = new Object();
@@ -76,32 +95,45 @@ public class FrameworkModel extends ScopeModel {
         // register FrameworkModel instance early
         // 将当前新创建的框架实例对象添加到容器中
         synchronized (globalLock) {
+            // 将当前框架模型实例添加到所有框架模型缓存对象中
             allInstances.add(this);
+            // 如上面代码所示重置默认的框架模型对象,这里将会是缓存实例列表的第一个,新增了一个刷新默认实例对象
             resetDefaultFrameworkModel();
         }
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(getDesc() + " is created");
         }
+        // 初始化框架模型领域对象
         initialize();
     }
 
     @Override
     protected void initialize() {
+        //这里初始化之前先调用下父类型ScopeModel的初始化方法
         super.initialize();
 
+        // 使用TypeDefinitionBuilder的静态方法initBuilders来初始化类型构建器TypeBuilder类型集合
         TypeDefinitionBuilder.initBuilders(this);
 
+        // 框架服务存储仓库对象,可以用于快速查询服务提供者信息
         serviceRepository = new FrameworkServiceRepository(this);
 
+        // 获取ScopeModelInitializer类型(域模型初始化器)的扩展加载器ExtensionLoader,每个扩展类型都会创建一个扩展加载器缓存起来
         ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader = this.getExtensionLoader(ScopeModelInitializer.class);
+        // 获取ScopeModelInitializer类型的支持的扩展集合,这里当前版本存在8个扩展类型实现
         Set<ScopeModelInitializer> initializers = initializerExtensionLoader.getSupportedExtensionInstances();
+        // 遍历这些扩展实现调用他们的initializeFrameworkModel方法来传递FrameworkModel类型对象,细节我们待会再详细说下
         for (ScopeModelInitializer initializer : initializers) {
             initializer.initializeFrameworkModel(this);
         }
 
+        // 创建一个内部的ApplicationModel类型,细节下面说
         internalApplicationModel = new ApplicationModel(this, true);
+        // 创建ApplicationConfig类型对象同时传递应用程序模型对象internalApplicationModel
+        // 获取ConfigManager类型对象,然后设置添加当前应用配置对象
         internalApplicationModel.getApplicationConfigManager().setApplication(
             new ApplicationConfig(internalApplicationModel, CommonConstants.DUBBO_INTERNAL_APPLICATION));
+        // 设置公开的模块名字为常量DUBBO_INTERNAL_APPLICATION
         internalApplicationModel.setModelName(CommonConstants.DUBBO_INTERNAL_APPLICATION);
     }
 
@@ -235,13 +267,21 @@ public class FrameworkModel extends ScopeModel {
         return defaultAppModel;
     }
 
+    /**
+     *  FrameworkModel的添加应用程序方法
+     */
     void addApplication(ApplicationModel applicationModel) {
         // can not add new application if it's destroying
+        // 检查FrameworkModel对象是否已经被标记为销毁状态,如果已经被销毁了则抛出异常无需执行逻辑
         checkDestroyed();
         synchronized (instLock) {
+            // 如果还未添加过当前参数传递应用模型
             if (!this.applicationModels.contains(applicationModel)) {
+                // 为当前应用模型生成内部id
                 applicationModel.setInternalId(buildInternalId(getInternalId(), appIndex.getAndIncrement()));
+                // 添加到成员变量集合applicationModels中
                 this.applicationModels.add(applicationModel);
+                // 如果非内部的则也向公开应用模型集合pubApplicationModels中添加一下
                 if (!applicationModel.isInternal()) {
                     this.pubApplicationModels.add(applicationModel);
                 }
@@ -287,11 +327,15 @@ public class FrameworkModel extends ScopeModel {
         }
     }
 
+    /**
+     * 重置默认的应用模型对象
+     */
     private void resetDefaultAppModel() {
         synchronized (instLock) {
             if (this.defaultAppModel != null && !this.defaultAppModel.isDestroyed()) {
                 return;
             }
+            // 取第一个公开的应用模型做为默认应用模型
             ApplicationModel oldDefaultAppModel = this.defaultAppModel;
             if (pubApplicationModels.size() > 0) {
                 this.defaultAppModel = pubApplicationModels.get(0);

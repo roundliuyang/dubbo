@@ -39,6 +39,9 @@ public class TypeDefinitionBuilder {
     private static final Logger logger = LoggerFactory.getLogger(TypeDefinitionBuilder.class);
     public static List<TypeBuilder> BUILDERS;
 
+    /**
+     * TypeDefinitionBuilder的初始化类型构造器方法initBuilders
+     */
     public static void initBuilders(FrameworkModel model) {
         // model.getExtensionLoader(TypeBuilder.class)    Dubbo的分层模型获取扩展加载器对象
         Set<TypeBuilder> tbs = model.getExtensionLoader(TypeBuilder.class).getSupportedExtensionInstances();

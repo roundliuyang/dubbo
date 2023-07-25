@@ -22,9 +22,14 @@ package org.apache.dubbo.common.extension;
  */
 public interface ExtensionAccessor {
 
+    /**
+     * 用于获取扩展加载管理器ExtensionDirector对象
+     */
     ExtensionDirector getExtensionDirector();
 
     /**
+     * 获取扩展对象ExtensionLoader
+     *
      * 模型对象(FrameworkModel)-–> 扩展访问器(ExtensionAccessor) —> 作用域扩展加载程序管理器(ExtensionDirector)
      * 这个getExtensionDirector()方法来源于FrameworkModel的抽象父类型ScopeModel中的getExtensionDirector()
      */
@@ -32,16 +37,25 @@ public interface ExtensionAccessor {
         return this.getExtensionDirector().getExtensionLoader(type);
     }
 
+    /**
+     * 根据扩展名字获取具体扩展对象
+     */
     default <T> T getExtension(Class<T> type, String name) {
         ExtensionLoader<T> extensionLoader = getExtensionLoader(type);
         return extensionLoader != null ? extensionLoader.getExtension(name) : null;
     }
 
+    /**
+     * 获取自适应扩展对象
+     */
     default <T> T getAdaptiveExtension(Class<T> type) {
         ExtensionLoader<T> extensionLoader = getExtensionLoader(type);
         return extensionLoader != null ? extensionLoader.getAdaptiveExtension() : null;
     }
 
+    /**
+     * 获取默认扩展对象
+     */
     default <T> T getDefaultExtension(Class<T> type) {
         ExtensionLoader<T> extensionLoader = getExtensionLoader(type);
         return extensionLoader != null ? extensionLoader.getDefaultExtension() : null;

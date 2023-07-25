@@ -102,6 +102,7 @@ public abstract class AbstractMethodConfig extends AbstractConfig {
     protected Integer forks;
 
     public AbstractMethodConfig() {
+        // 默认情况下使用 ApplicationModel 的静态方法获取默认的模型对象和默认的模块对象
         super(ApplicationModel.defaultModel().getDefaultModule());
     }
 

@@ -38,6 +38,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 表示正在使用Dubbo 的应用程序，并存储基本元数据信息，以便在RPC调用过程中使用。
+ * ApplicationModel 包括许多关于发布服务的 ProviderModel 和许多关于订阅服务的 Consumer model
+ *
  * {@link ExtensionLoader}, {@code DubboBootstrap} and this class are at present designed to be
  * singleton or static (by itself totally static or uses some static fields). So the instances
  * returned from them are of process scope. If you want to support multiple dubbo servers in one
@@ -54,17 +57,44 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ApplicationModel extends ScopeModel {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ApplicationModel.class);
     public static final String NAME = "ApplicationModel";
+    /**
+     * 所有 ModuleModel 实例对象集合
+     */
     private final List<ModuleModel> moduleModels = new CopyOnWriteArrayList<>();
+    /**
+     * 发布的ModuleModel实例对象集合
+     */
     private final List<ModuleModel> pubModuleModels = new CopyOnWriteArrayList<>();
+    /**
+     * 环境信息 Environment 实例对象
+     */
     private Environment environment;
+    /**
+     * 配置管理 ConfigManager 实例对象
+     */
     private ConfigManager configManager;
+    /**
+     * 服务存储库ServiceRepository 实例对象
+     */
     private ServiceRepository serviceRepository;
+    /**
+     * 应用程序部署器 ApplicationDeployer 实例对象
+     */
     private ApplicationDeployer deployer;
 
+    /**
+     * 所属框架 FrameworkModel 实例对象
+     */
     private final FrameworkModel frameworkModel;
 
+    /**
+     * 内部的模块模型ModuleModel 实例对象
+     */
     private ModuleModel internalModule;
 
+    /**
+     * 默认的模块模型 ModuleModel 实例对象
+     */
     private volatile ModuleModel defaultModule;
 
     // internal module index is 0, default module index is 1
@@ -82,6 +112,8 @@ public class ApplicationModel extends ScopeModel {
     }
 
     /**
+     * (应用程序领域模型)类型中获取默认模型对象的方法
+     * 这里可以看到想要获取应用程序模型必须先通过框架领域模型来获取层级也是框架领域模型到应用程序领域模型
      * During destroying the default FrameworkModel, the FrameworkModel.defaultModel() or ApplicationModel.defaultModel()
      * will return a broken model, maybe cause unpredictable problem.
      * Recommendation: Avoid using the default model as much as possible.
@@ -195,30 +227,41 @@ public class ApplicationModel extends ScopeModel {
     }
 
     public ApplicationModel(FrameworkModel frameworkModel, boolean isInternal) {
+        // 调用父类型ScopeModel传递参数,这个构造器的传递没与前面看到的FrameworkModel构造器的中的调用参数有些不同第一个参数我们为frameworkModel代表父域模型,
+        // 第二个参数标记域为应用程序级别APPLICATION,第三个参数我们传递的为true代表为内部域
         super(frameworkModel, ExtensionScope.APPLICATION, isInternal);
         Assert.notNull(frameworkModel, "FrameworkModel can not be null");
+        // 应用程序域成员变量记录frameworkModel对象
         this.frameworkModel = frameworkModel;
+        // frameworkModel对象添加当前应用程序域对象
         frameworkModel.addApplication(this);
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(getDesc() + " is created");
         }
+        // 初始化应用程序
         initialize();
     }
 
     @Override
     protected void initialize() {
+        // 这个是调用域模型来初始化基础信息如扩展访问器等,可以参考 3.2.5 ScopeModel类型的初始化方法initialize()章节
         super.initialize();
+        // 创建一个内部的模块模型对象
         internalModule = new ModuleModel(this, true);
+        // 创建一个独立服务存储对象
         this.serviceRepository = new ServiceRepository(this);
 
+        // 获取应用程序初始化监听器ApplicationInitListener扩展
         ExtensionLoader<ApplicationInitListener> extensionLoader = this.getExtensionLoader(ApplicationInitListener.class);
+        // 如果存在应用程序初始化监听器扩展则执行这个初始化方法,在当前的版本还未看到有具体的扩展实现类型
         Set<String> listenerNames = extensionLoader.getSupportedExtensions();
         for (String listenerName : listenerNames) {
             extensionLoader.getExtension(listenerName).init();
         }
-
+        // 初始化扩展(这个是应用程序生命周期的方法调用,这里调用初始化方法
         initApplicationExts();
 
+        // 获取域模型初始化器扩展对象列表,然后执行初始化方法
         ExtensionLoader<ScopeModelInitializer> initializerExtensionLoader = this.getExtensionLoader(ScopeModelInitializer.class);
         Set<ScopeModelInitializer> initializers = initializerExtensionLoader.getSupportedExtensionInstances();
         for (ScopeModelInitializer initializer : initializers) {

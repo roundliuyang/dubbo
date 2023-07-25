@@ -35,10 +35,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * ScopeModel 模型对象的公共抽象父类型
+ */
 public abstract class ScopeModel implements ExtensionAccessor {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScopeModel.class);
 
     /**
+     * 内部id用于表示模型树的层次结构
      * The internal id is used to represent the hierarchy of the model tree, such as:
      * <ol>
      *     <li>1</li>
@@ -54,19 +58,39 @@ public abstract class ScopeModel implements ExtensionAccessor {
     private String internalId;
 
     /**
+     * 公共模型名称，可以被用户设置
      * Public Model Name, can be set from user
      */
     private String modelName;
 
+    /**
+     * 描述信息
+     */
     private String desc;
 
+    /**
+     * 类加载器管理
+     */
     private Set<ClassLoader> classLoaders;
 
+    /**
+     * 父类型管理parent
+     */
     private final ScopeModel parent;
+
+    /**
+     * 当前模型的所属域ExtensionScope有:FRAMEWORK(框架),APPLICATION(应用),MODULE(模块),SELF(自给自足，为每个作用域创建一个实例，用于特殊的SPI扩展，如ExtensionInjector)
+     */
     private final ExtensionScope scope;
 
+    /**
+     * 具体的扩展加载程序管理器对象的管理:ExtensionDirector
+     */
     private ExtensionDirector extensionDirector;
 
+    /**
+     * 域Bean工厂管理,一个内部共享的Bean工厂ScopeBeanFactory
+     */
     private ScopeBeanFactory beanFactory;
     private List<ScopeModelDestroyListener> destroyListeners;
 
@@ -90,14 +114,23 @@ public abstract class ScopeModel implements ExtensionAccessor {
      * </ol>
      */
     protected void initialize() {
+        // 初始化ExtensionDirector是一个作用域扩展加载程序管理器。
+        // ExtensionDirector支持多个级别，子级可以继承父级的扩展实例。
+        // 查找和创建扩展实例的方法类似于Java classloader。
         this.extensionDirector = new ExtensionDirector(parent != null ? parent.getExtensionDirector() : null, scope, this);
+        // 这个参考了Spring的生命周期回调思想,添加一个扩展初始化的前后调用的处理器,在扩展初始化之前或之后调用的后处理器,参数类型为ExtensionPostProcessor
         this.extensionDirector.addExtensionPostProcessor(new ScopeModelAwareExtensionProcessor(this));
+        // 创建一个内部共享的域工厂对象,用于注册Bean,创建Bean,获取Bean,初始化Bean等
         this.beanFactory = new ScopeBeanFactory(parent != null ? parent.getBeanFactory() : null, extensionDirector);
+        // 使用数据结构链表,创建销毁监听器容器,一般用于关闭进程,重置应用程序对象等操作时候调用
         this.destroyListeners = new LinkedList<>();
+        // 使用ConcurrentHashMap属性集合
         this.attributes = new ConcurrentHashMap<>();
+        // 使用ConcurrentHashSet存储当前域下的类加载器
         this.classLoaders = new ConcurrentHashSet<>();
 
         // Add Framework's ClassLoader by default
+        // 将当前类的加载器存入加载器集合classLoaders中
         ClassLoader dubboClassLoader = ScopeModel.class.getClassLoader();
         if (dubboClassLoader != null) {
             this.addClassLoader(dubboClassLoader);

@@ -402,7 +402,7 @@ public abstract class AbstractConfig implements Serializable {
 
             /**
              * 被子类重写的方法,根据多态会调用具体子类型的这个方法我们下面来看
-             * 子类应该重写此方法以初始化其SPI扩展并更改引用的配置的范围模型。
+             * 子类应该重写此方法以初始化其SPI扩展并更改引用的配置的范围模型。（有点绕）
              *
              * 当ScopeModel模型对象发生了改变,上面调用了postProcessAfterScopeModelChanged方法来通知模型对象改变的时候要执行的操作,
              * 根据多态重写的逻辑我们从实现类的postProcessAfterScopeModelChanged来看,

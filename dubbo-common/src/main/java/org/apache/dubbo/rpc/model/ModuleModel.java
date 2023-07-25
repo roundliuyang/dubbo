@@ -31,6 +31,7 @@ import org.apache.dubbo.config.context.ModuleConfigManager;
 import java.util.Set;
 
 /**
+ * 服务模块的模型
  * Model of a service module
  */
 public class ModuleModel extends ScopeModel {
@@ -38,10 +39,25 @@ public class ModuleModel extends ScopeModel {
 
     public static final String NAME = "ModuleModel";
 
+    /**
+     * 所属应用程序模型 ApplicationModel 实例对象
+     */
     private final ApplicationModel applicationModel;
+    /**
+     * 模块环境信息 ModuleEnvironment 实例对象
+     */
     private ModuleEnvironment moduleEnvironment;
+    /**
+     * 模块服务存储库ModuleServiceRepository实例对象
+     */
     private ModuleServiceRepository serviceRepository;
+    /**
+     * 模块的服务配置管理ModuleConfigManager实例对象
+     */
     private ModuleConfigManager moduleConfigManager;
+    /**
+     * 模块部署器ModuleDeployer实例对象deployer用于导出和引用服务
+     */
     private ModuleDeployer deployer;
 
     public ModuleModel(ApplicationModel applicationModel) {
@@ -49,20 +65,25 @@ public class ModuleModel extends ScopeModel {
     }
 
     public ModuleModel(ApplicationModel applicationModel, boolean isInternal) {
+        // 调用ScopeModel传递3个参数父模型,模型域为模块域,是否为内部模型参数为true
         super(applicationModel, ExtensionScope.MODULE, isInternal);
         Assert.notNull(applicationModel, "ApplicationModel can not be null");
+        // 初始化成员变量applicationModel
         this.applicationModel = applicationModel;
+        // 将模块模型添加至应用模型中
         applicationModel.addModule(this, isInternal);
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(getDesc() + " is created");
         }
 
+        // 初始化模块模型
         initialize();
         Assert.notNull(serviceRepository, "ModuleServiceRepository can not be null");
         Assert.notNull(moduleConfigManager, "ModuleConfigManager can not be null");
         Assert.assertTrue(moduleConfigManager.isInitialized(), "ModuleConfigManager can not be initialized");
 
         // notify application check state
+        // 获取应用程序发布对象,通知检查状态
         ApplicationDeployer applicationDeployer = applicationModel.getDeployer();
         if (applicationDeployer != null) {
             applicationDeployer.notifyModuleChanged(this, DeployState.PENDING);

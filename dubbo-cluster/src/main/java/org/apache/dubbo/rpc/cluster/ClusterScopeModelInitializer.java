@@ -26,6 +26,9 @@ import org.apache.dubbo.rpc.model.FrameworkModel;
 import org.apache.dubbo.rpc.model.ModuleModel;
 import org.apache.dubbo.rpc.model.ScopeModelInitializer;
 
+/**
+ * 容错域模型初始化器
+ */
 public class ClusterScopeModelInitializer implements ScopeModelInitializer {
     @Override
     public void initializeFrameworkModel(FrameworkModel frameworkModel) {
