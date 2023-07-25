@@ -45,6 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 在 dubbo-common 模块的 bytecode 包，基于 Javassit 库，动态编译，实现提供了通用的的动态代理实现。
+ * 类生成器，基于 Javassist 实现。
  * ClassGenerator
  */
 public final class ClassGenerator {

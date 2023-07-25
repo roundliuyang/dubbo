@@ -37,6 +37,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATT
 import static org.apache.dubbo.rpc.Constants.INTERFACES;
 
 /**
+ * 代理工厂抽象类
  * AbstractProxyFactory
  */
 public abstract class AbstractProxyFactory implements ProxyFactory {
@@ -46,6 +47,13 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractProxyFactory.class);
 
+    /**
+     * 获得需要生成代理的接口们
+     * @param invoker
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @Override
     public <T> T getProxy(Invoker<T> invoker) throws RpcException {
         return getProxy(invoker, false);

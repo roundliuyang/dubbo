@@ -30,6 +30,7 @@ import org.apache.dubbo.rpc.proxy.jdk.JdkProxyFactory;
 import java.util.Arrays;
 
 /**
+ * 基于 Javassist 代理工厂实现类
  * JavassistRpcProxyFactory
  */
 public class JavassistProxyFactory extends AbstractProxyFactory {
@@ -40,6 +41,11 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
         try {
+            /**
+             * 调用 Proxy#getProxy(interface)方法，获得 Proxy 对象，
+             * 调用 Proxy#newInstance(InvocationHandler) 方法，获得 proxy 对象。
+             * 其中传入的的参数是是 InvokerInvocationHandler 对象，通过这样的方式，让 proxy 和真正的逻辑代码解耦
+             */
             return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
         } catch (Throwable fromJavassist) {
             // try fall back to JDK proxy factory
@@ -66,6 +72,7 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
             final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);
             // 创建一个匿名内部类对象 继承自AbstractProxyInvoker的Invoker对象
             return new AbstractProxyInvoker<T>(proxy, type, url) {
+                // 在该方法中，调用 Wrapper#invokeMethod(...) 方法，从而调用 Service 的方法
                 @Override
                 protected Object doInvoke(T proxy, String methodName,
                                           Class<?>[] parameterTypes,

@@ -24,6 +24,7 @@ import static org.apache.dubbo.common.extension.ExtensionScope.FRAMEWORK;
 import static org.apache.dubbo.rpc.Constants.PROXY_KEY;
 
 /**
+ * 代理工厂接口
  * ProxyFactory. (API/SPI, Singleton, ThreadSafe)
  */
 @SPI(value = "javassist", scope = FRAMEWORK)

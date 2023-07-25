@@ -29,10 +29,14 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
+ * 实现 InvocationHandler接口
  * InvokerHandler
  */
 public class InvokerInvocationHandler implements InvocationHandler {
     private static final Logger logger = LoggerFactory.getLogger(InvokerInvocationHandler.class);
+    /**
+     * Invoker 对象
+     */
     private final Invoker<?> invoker;
     private ServiceModel serviceModel;
     private URL url;
@@ -53,12 +57,13 @@ public class InvokerInvocationHandler implements InvocationHandler {
      */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // wait 等方法，直接反射调用
         if (method.getDeclaringClass() == Object.class) {
             return method.invoke(invoker, args);
         }
-        // 方法名字为sayHello
+        // 方法名字为sayHello（代码示例的情况下）
         String methodName = method.getName();
-        // 参数类型只有一个为java.lang.String
+        // 参数类型只有一个为java.lang.String（代码示例的情况），不使用 RPC 调用
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length == 0) {
             if ("toString".equals(methodName)) {
@@ -79,7 +84,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
             rpcInvocation.put(Constants.CONSUMER_MODEL, serviceModel);
             rpcInvocation.put(Constants.METHOD_MODEL, ((ConsumerModel) serviceModel).getMethodModel(method));
         }
-        // invoker为调用器我们继续看
+        // invoker为调用器
         return InvocationUtil.invoke(invoker, rpcInvocation);
     }
 }

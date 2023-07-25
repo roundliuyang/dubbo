@@ -39,6 +39,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
+ * Wrapper 抽象类，用于创建某个对象的方法调用的包装器，以避免反射调用，提高性能
  * Wrapper.
  */
 public abstract class Wrapper {
@@ -81,6 +82,14 @@ public abstract class Wrapper {
             return false;
         }
 
+        /**
+         * invoked method
+         * @param instance instance. 被调用对象
+         * @param mn       method name.  方法名
+         * @param types   参数类型数组
+         * @param args     argument array.  参数数组
+         * @return   返回值
+         */
         @Override
         public Object invokeMethod(Object instance, String mn, Class<?>[] types, Object[] args) throws NoSuchMethodException {
             if ("getClass".equals(mn)) {
@@ -104,21 +113,25 @@ public abstract class Wrapper {
     private static AtomicLong WRAPPER_CLASS_COUNTER = new AtomicLong(0);
 
     /**
+     * 根据指定类，获得 Wrapper 对象
      * get wrapper.
      *
      * @param c Class instance.
      * @return Wrapper instance(not null).
      */
     public static Wrapper getWrapper(Class<?> c) {
+        // 判断是否继承 ClassGenerator.DC.class ，如果是，拿到父类，避免重复包装
         while (ClassGenerator.isDynamicClass(c)) // can not wrapper on dynamic class.
         {
             c = c.getSuperclass();
         }
 
+        // 指定类为 Object.class
         if (c == Object.class) {
             return OBJECT_WRAPPER;
         }
 
+        // 从缓存中获得 Wrapper 对象
         return WRAPPER_MAP.computeIfAbsent(c, Wrapper::makeWrapper);
     }
 
