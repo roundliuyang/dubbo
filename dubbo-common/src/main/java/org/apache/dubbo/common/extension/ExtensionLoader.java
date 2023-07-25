@@ -174,6 +174,9 @@ public class ExtensionLoader<T> {
         // 创建实例化对象的策略对象
         initInstantiationStrategy();
         // 如果当前扩展类型为扩展注入器类型则设置当前注入器变量为空,否则的话获取一个扩展注入器扩展对象
+        // 1)这里有个type为空的判断,普通的扩展类型肯定不是ExtensionInjector类型 这里必定会为每个非扩展注入ExtensionInjector类型创建一个ExtensionInjector类型的扩展对象,
+        // 2) 这里代码会走extensionDirector.getExtensionLoader(ExtensionInjector.class)这一步进去之后的代码刚刚看过就不再看了,这个代码会创建一个为ExtensionInjector扩展对象的加载器对象ExtensionLoader
+        // 3) getAdaptiveExtension() 这个方法就是通过扩展加载器获取具体的扩展对象的方法我们会详细说
         this.injector = (type == ExtensionInjector.class ? null : extensionDirector.getExtensionLoader(ExtensionInjector.class)
             .getAdaptiveExtension());
         // 创建Activate注解的排序器
