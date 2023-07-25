@@ -26,10 +26,15 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 /**
+ * 实现 AbstractProxyFactory 抽象类
  * JdkRpcProxyFactory
  */
 public class JdkProxyFactory extends AbstractProxyFactory {
 
+    /**
+     * 创建 InvokerInvocationHandler 对象，传入 invoker 对象
+     * 调用 java.lang.reflect.Proxy#getProxy(ClassLoader loader, Class<?>[] interfaces, InvocationHandler h) 方法，创建 Proxy 对象
+     */
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
@@ -43,7 +48,9 @@ public class JdkProxyFactory extends AbstractProxyFactory {
             protected Object doInvoke(T proxy, String methodName,
                                       Class<?>[] parameterTypes,
                                       Object[] arguments) throws Throwable {
+                // 获得方法
                 Method method = proxy.getClass().getMethod(methodName, parameterTypes);
+                // 调用方法
                 return method.invoke(proxy, arguments);
             }
         };
