@@ -1395,7 +1395,8 @@ public class ExtensionLoader<T> {
     private Class<?> getAdaptiveExtensionClass() {
         //获取扩展类型,将扩展类型存入成员变量cachedClasses中进行缓存
         getExtensionClasses();
-        //在上个方法的详细解析中的最后一步loadClass方法中如果扩展类型存在Adaptive注解将会将扩展类型赋值给cachedAdaptiveClass,否则的话会把扩展类型都缓存起来存储在扩展集合extensionClasses中
+        // 在上个方法的详细解析中的最后一步loadClass方法中如果扩展类型存在Adaptive注解将会将扩展类型赋值给cachedAdaptiveClass,
+        // 否则的话会把扩展类型都缓存起来存储在扩展集合extensionClasses中
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
