@@ -17,7 +17,7 @@
 package org.apache.dubbo.common.extension;
 
 /**
- * SPI扩展可以实现这个感知接口，以获得适当的xtensionAccessor实例。
+ * SPI扩展可以实现这个感知接口，以获得适当的 ExtensionAccessor实例。
  *
  * SPI extension can implement this aware interface to obtain appropriate {@link ExtensionAccessor} instance.
  */

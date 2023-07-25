@@ -37,6 +37,7 @@ public class OrderedPropertiesConfiguration implements Configuration{
 
     public void refresh() {
         properties = new Properties();
+        // OrderedPropertiesConfiguration 中获取有序配置提供器对象
         ExtensionLoader<OrderedPropertiesProvider> propertiesProviderExtensionLoader = moduleModel.getExtensionLoader(OrderedPropertiesProvider.class);
         Set<String> propertiesProviderNames = propertiesProviderExtensionLoader.getSupportedExtensions();
         if (CollectionUtils.isEmpty(propertiesProviderNames)) {

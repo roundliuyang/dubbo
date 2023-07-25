@@ -26,6 +26,11 @@ import java.lang.annotation.Target;
 
 /**
  * 用于在有多个实现时加载某些筛选器扩展
+ * Activate。此注解对于使用给定条件自动激活某些扩展非常有用，例如：@Activate可用于在有多个实现时加载某些筛选器扩展。
+ * group()指定组条件。框架SPI定义了有效的组值。
+ * value()指定URL条件中的参数键。
+ * SPI提供程序可以调用ExtensionLoader。getActivateExtension(URL、String、String)方法以查找具有给定条件的所有已激活扩展。
+ *
  * Activate. This annotation is useful for automatically activate certain extensions with the given criteria,
  * for examples: <code>@Activate</code> can be used to load certain <code>Filter</code> extension when there are
  * multiple implementations.

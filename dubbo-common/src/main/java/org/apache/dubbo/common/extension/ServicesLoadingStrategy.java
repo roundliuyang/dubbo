@@ -17,6 +17,7 @@
 package org.apache.dubbo.common.extension;
 
 /**
+ * JAVA SPI加载策略 ,将加载目录为META-INF/services/的扩展
  * Services {@link LoadingStrategy}
  *
  * @since 2.7.7

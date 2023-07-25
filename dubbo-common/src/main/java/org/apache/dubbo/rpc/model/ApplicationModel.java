@@ -270,6 +270,7 @@ public class ApplicationModel extends ScopeModel {
     }
 
     private void initApplicationExts() {
+        // ModuleModel中获取模块扩展对象
         Set<ApplicationExt> exts = this.getExtensionLoader(ApplicationExt.class).getSupportedExtensionInstances();
         for (ApplicationExt ext : exts) {
             ext.initialize();
@@ -334,6 +335,7 @@ public class ApplicationModel extends ScopeModel {
     @Override
     public Environment getModelEnvironment() {
         if (environment == null) {
+            // ApplicationModel中获Environment对象
             environment = (Environment) this.getExtensionLoader(ApplicationExt.class)
                 .getExtension(Environment.NAME);
         }
