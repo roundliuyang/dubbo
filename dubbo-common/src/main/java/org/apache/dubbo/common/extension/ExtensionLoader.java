@@ -257,6 +257,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 获取自动激活扩展
      * This is equivalent to {@code getActivateExtension(url, key, null)}
      *
      * @param url url 服务的url
@@ -290,7 +291,9 @@ public class ExtensionLoader<T> {
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String[], String)
      */
     public List<T> getActivateExtension(URL url, String key, String group) {
+        // 从参数中获取 url 指定的值
         String value = url.getParameter(key);
+        // 调用下个重载方法
         return getActivateExtension(url, StringUtils.isEmpty(value) ? null : COMMA_SPLIT_PATTERN.split(value), group);
     }
 
