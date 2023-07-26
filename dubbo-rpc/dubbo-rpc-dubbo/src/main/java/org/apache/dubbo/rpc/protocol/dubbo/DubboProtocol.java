@@ -90,7 +90,7 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.SHARE_CONNECTIONS_KE
 
 /**
  * 在 DubboProtocol 类中，实现了自己的 ExchangeHandler 对象，处理请求、消息、连接、断开连接等事件。对于服务消费者的远程调用，
- * 通过 #reply(ExchangeChannel channel, Object message) 和 #reply(Channel channel, Object message) 方法来处理
+ * 通过 #reply(ExchangeChannel channel, Object message)方法来处理
  * dubbo protocol support.
  */
 public class DubboProtocol extends AbstractProtocol {

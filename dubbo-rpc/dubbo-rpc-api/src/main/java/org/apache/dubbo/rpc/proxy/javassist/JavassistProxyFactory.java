@@ -46,7 +46,8 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
              * 调用 Proxy#newInstance(InvocationHandler) 方法，获得 proxy 对象。
              * 其中传入的的参数是是 InvokerInvocationHandler 对象，通过这样的方式，让 proxy 和真正的逻辑代码解耦
              */
-            return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
+            Proxy proxy = Proxy.getProxy(interfaces);
+            return (T) proxy.newInstance(new InvokerInvocationHandler(invoker));
         } catch (Throwable fromJavassist) {
             // try fall back to JDK proxy factory
             try {
