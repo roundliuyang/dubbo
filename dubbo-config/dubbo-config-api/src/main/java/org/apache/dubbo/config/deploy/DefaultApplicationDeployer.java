@@ -573,6 +573,7 @@ public class DefaultApplicationDeployer extends AbstractDeployer<ApplicationMode
     }
 
     /**
+     * 发布器是帮助我们发布服务和引用服务的，在Dubbo3中不论是服务提供者还是服务消费者如果想要启动服务都需要走这个启动方法的逻辑
      * Start the bootstrap
      *
      * @return
