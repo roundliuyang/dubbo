@@ -715,6 +715,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             invoker = new DelegateProviderMetaDataInvoker(invoker, this);
         }
         // 使用协议导出调用对象 export
+
+//        注释的三行就是 protocolSPI.export(invoker) 要执行的逻辑
+//        ScopeModel scopeModel = ScopeModelUtil.getOrDefault(url.getScopeModel(), Protocol.class);
+//        Protocol extension = scopeModel.getExtensionLoader(Protocol.class).getExtension(invoker.getUrl().getProtocol());
+//        Exporter<?> exporter = extension.export(invoker);
+
         Exporter<?> exporter = protocolSPI.export(invoker);
         exporters.add(exporter);
     }
