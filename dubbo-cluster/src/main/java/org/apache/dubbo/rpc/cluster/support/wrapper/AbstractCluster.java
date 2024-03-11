@@ -54,6 +54,7 @@ public abstract class AbstractCluster implements Cluster {
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory, boolean buildFilterChain) throws RpcException {
+        // 带有过滤器将走上面这个逻辑
         if (buildFilterChain) {
             return buildClusterInterceptors(doJoin(directory));
         } else {
@@ -75,6 +76,7 @@ public abstract class AbstractCluster implements Cluster {
         private ClusterInvoker<T> filterInvoker;
 
         public ClusterFilterInvoker(AbstractClusterInvoker<T> invoker) {
+            // 过滤器构造链DefaultFilterChainBuilder
             List<FilterChainBuilder> builders = ScopeModelUtil.getApplicationModel(invoker.getUrl().getScopeModel()).getExtensionLoader(FilterChainBuilder.class).getActivateExtensions();
             if (CollectionUtils.isEmpty(builders)) {
                 filterInvoker = invoker;

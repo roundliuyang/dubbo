@@ -25,13 +25,14 @@ import org.apache.dubbo.rpc.model.ScopeModel;
 import org.apache.dubbo.rpc.model.ScopeModelUtil;
 
 /**
+ * 集群接口
  * Cluster. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>
  * <a href="http://en.wikipedia.org/wiki/Fault-tolerant_system">Fault-Tolerant</a>
  *
  */
-@SPI(Cluster.DEFAULT)
+@SPI(Cluster.DEFAULT)            // Dubbo SPI 拓展点，默认为 "failover" ，即失败重试，也就是会贯穿本文的 FailoverCluster 类
 public interface Cluster {
 
     String DEFAULT = "failover";
@@ -44,7 +45,7 @@ public interface Cluster {
      * @return cluster invoker
      * @throws RpcException
      */
-    @Adaptive
+    @Adaptive                        // 基于 Dubbo SPI Adaptive  机制，加载对应的 Cluster 实现，使用 URL.cluster 属性
     <T> Invoker<T> join(Directory<T> directory, boolean buildFilterChain) throws RpcException;
 
     static Cluster getCluster(ScopeModel scopeModel, String name) {
