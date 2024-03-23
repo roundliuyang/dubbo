@@ -22,6 +22,7 @@ import java.lang.reflect.Type;
 /**
  * Object input.
  * 对象输入接口
+ * 在 DataInput 的基础上，增加读取对象的数据。
  */
 public interface ObjectInput extends DataInput {
 

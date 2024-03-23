@@ -93,11 +93,11 @@ public class FastJsonObjectOutput implements ObjectOutput {
     @Override
     public void writeObject(Object obj) throws IOException {
         SerializeWriter out = new SerializeWriter();
-        // 序列化，写入对象
+        // 创建了一个JSONSerializer对象，它将被用于将Java对象序列化为JSON，并将结果写入到先前创建的SerializeWriter中
         JSONSerializer serializer = new JSONSerializer(out);
         serializer.config(SerializerFeature.WriteEnumUsingToString, true);
         serializer.write(obj);
-        // 写到，输出流
+        // 将SerializeWriter中的内容写入到另一个输出流writer中，实际上将序列化后的JSON数据写入到某个目标，这个目标可能是文件、网络连接或者其他输出流。
         out.writeTo(writer);
         out.close(); // for reuse SerializeWriter buf
         writer.println();  // 换行

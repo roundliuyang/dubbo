@@ -313,7 +313,7 @@ public class RegistryProtocol implements Protocol {
      * @return Invoker 对象
      */
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
-        // 创建 RegistryDirectory 对象，并设置注册中心
+        // 创建 RegistryDirectory 对象，并设置注册中心，
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
         directory.setRegistry(registry);
         directory.setProtocol(protocol);
@@ -338,7 +338,7 @@ public class RegistryProtocol implements Protocol {
                         + "," + Constants.CONFIGURATORS_CATEGORY
                         + "," + Constants.ROUTERS_CATEGORY));
 
-        // 创建 Invoker 对象
+        // 创建 Invoker 对象。cluster 属性，Cluster$Adaptive 对象
         Invoker invoker = cluster.join(directory);
         // 向本地注册表，注册消费者
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);

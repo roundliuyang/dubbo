@@ -47,9 +47,17 @@ public interface Serialization {
 
     /**
      * create serializer
+     * 创建 ObjectOutput 对象，序列化输出到 OutputStream
+     * 虽然添加了 @Adaptive 注解， 但是实际上，不使用 Dubbo SPI Adaptive 机制，而是代码中，直接获取。例如：
+     * 
+     * // CodecSupport.java
+     * public static Serialization getSerialization(URL url) {
+     *     return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(
+     *             url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));
+     * }
      *
-     * @param url
-     * @param output
+     * @param url URL
+     * @param output 输出流
      * @return serializer
      * @throws IOException
      */
@@ -58,9 +66,10 @@ public interface Serialization {
 
     /**
      * create deserializer
+     * 创建 ObjectInput 对象，从 InputStream 反序列化
      *
-     * @param url
-     * @param input
+     * @param url URL
+     * @param input 输入流
      * @return deserializer
      * @throws IOException
      */

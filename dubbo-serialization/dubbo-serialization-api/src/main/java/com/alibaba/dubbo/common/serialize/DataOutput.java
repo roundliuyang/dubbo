@@ -21,6 +21,7 @@ import java.io.IOException;
 /**
  * Data output.
  * 数据输出接口
+ * 向 InputStream 中，写入基本类型的数据。
  */
 public interface DataOutput {
 

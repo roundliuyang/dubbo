@@ -20,6 +20,8 @@ import java.io.IOException;
 
 /**
  * Object output.
+ * 实现 DataOutput 接口，对象输出接口。
+ * 在 DataOutput 的基础上，增加写入对象的数据。
  */
 public interface ObjectOutput extends DataOutput {
 

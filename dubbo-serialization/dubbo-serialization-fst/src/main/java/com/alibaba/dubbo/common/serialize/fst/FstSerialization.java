@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * FST 序列化实现类
+ */
 public class FstSerialization implements Serialization {
 
     @Override
@@ -32,6 +35,9 @@ public class FstSerialization implements Serialization {
         return 9;
     }
 
+    /**
+     * "x-application/fst" ，类似 HTTP 协议 的 Content-Types 的 Header 。在 『6. JSON 实现』 类中，返回的是 "text/json" 。
+     */
     @Override
     public String getContentType() {
         return "x-application/fst";

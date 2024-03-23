@@ -21,6 +21,7 @@ import java.io.IOException;
 /**
  * Data input.
  * 数据输入接口
+ * 从 InputStream 中，读取基本类型的数据
  */
 public interface DataInput {
 
