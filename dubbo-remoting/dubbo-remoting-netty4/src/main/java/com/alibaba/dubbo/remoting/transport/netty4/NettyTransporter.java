@@ -23,8 +23,14 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.remoting.Server;
 import com.alibaba.dubbo.remoting.Transporter;
 
+/**
+ * 基于Netty4 的网络传输实现类
+ */
 public class NettyTransporter implements Transporter {
 
+    /**
+     * 拓展名
+     */
     public static final String NAME = "netty";
 
     @Override
