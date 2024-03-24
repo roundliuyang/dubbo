@@ -30,12 +30,19 @@ import com.alibaba.dubbo.remoting.transport.dispatcher.WrappedChannelHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
+/**
+ * 实现 WrappedChannelHandler 抽象类
+ */
 public class AllChannelHandler extends WrappedChannelHandler {
 
     public AllChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
     }
 
+    /**
+     * 创建 ChannelEventRunnable 对象，提交给线程池执行。
+     * 注意，传入的状态为 ChannelState.CONNECTED 。不同的实现方法，对应不同的状态。
+     */
     @Override
     public void connected(Channel channel) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();

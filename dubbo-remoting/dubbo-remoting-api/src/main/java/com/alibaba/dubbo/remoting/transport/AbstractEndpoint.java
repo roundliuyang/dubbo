@@ -29,15 +29,25 @@ import com.alibaba.dubbo.remoting.transport.codec.CodecAdapter;
 
 /**
  * AbstractEndpoint
+ * 实现 Resetable 接口，继承 AbstractPeer 抽象类，端点抽象类。
  */
 public abstract class AbstractEndpoint extends AbstractPeer implements Resetable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractEndpoint.class);
 
+    /**
+     * 编解码器
+     */
     private Codec2 codec;
 
+    /**
+     * 超时时间
+     */
     private int timeout;
 
+    /**
+     * 连接超时时间
+     */
     private int connectTimeout;
 
     public AbstractEndpoint(URL url, ChannelHandler handler) {
@@ -47,9 +57,12 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
         this.connectTimeout = url.getPositiveParameter(Constants.CONNECT_TIMEOUT_KEY, Constants.DEFAULT_CONNECT_TIMEOUT);
     }
 
+    /**
+     * 基于 url 参数，加载对应的 Codec 实现对象
+     */
     protected static Codec2 getChannelCodec(URL url) {
         String codecName = url.getParameter(Constants.CODEC_KEY, "telnet");
-        if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {
+        if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {     // 基于 Dubbo SPI 机制，加载对应的 Codec 实现对象。例如，在 DubboProtocol 中，会获得 DubboCodec 对象。
             return ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(codecName);
         } else {
             return new CodecAdapter(ExtensionLoader.getExtensionLoader(Codec.class)
@@ -57,6 +70,10 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
         }
     }
 
+    /**
+     * 重置属性
+     * 使用新的 url 属性，可重置 codec timeout connectTimeout 属性。
+     */
     @Override
     public void reset(URL url) {
         if (isClosed()) {

@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Telnet 命令编解码器
  * TelnetCodec
  */
 public class TelnetCodec extends TransportCodec {
@@ -157,16 +158,21 @@ public class TelnetCodec extends TransportCodec {
         return decode(channel, buffer, readable, message);
     }
 
+    /**
+     * 解码
+     */
     @SuppressWarnings("unchecked")
     protected Object decode(Channel channel, ChannelBuffer buffer, int readable, byte[] message) throws IOException {
         if (isClientSide(channel)) {
             return toString(message, getCharset(channel));
         }
+        // 检查长度
         checkPayload(channel, readable);
         if (message == null || message.length == 0) {
             return DecodeResult.NEED_MORE_INPUT;
         }
 
+        // 处理退格的情况
         if (message[message.length - 1] == '\b') { // Windows backspace echo
             try {
                 boolean doublechar = message.length >= 3 && message[message.length - 3] < 0; // double byte char

@@ -18,10 +18,13 @@ package com.alibaba.dubbo.common;
 
 /**
  * Resetable.
+ * 可重置接口
+ * 
  */
 public interface Resetable {
 
     /**
+     * Server 实现 Resetable 接口，在实现 #reset(url) 方法，用于根据新传入的 url 属性，重置自己内部的一些属性，例如 AbstractServer#reset(url) 方法。
      * reset.
      *
      * @param url

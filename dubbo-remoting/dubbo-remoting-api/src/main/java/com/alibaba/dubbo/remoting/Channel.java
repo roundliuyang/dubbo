@@ -19,6 +19,7 @@ package com.alibaba.dubbo.remoting;
 import java.net.InetSocketAddress;
 
 /**
+ * 继承 Endpoint 接口，通道接口
  * Channel. (API/SPI, Prototype, ThreadSafe)
  *
  *

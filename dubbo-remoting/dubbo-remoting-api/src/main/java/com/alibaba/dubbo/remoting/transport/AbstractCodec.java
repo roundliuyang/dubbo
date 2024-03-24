@@ -32,11 +32,15 @@ import java.net.InetSocketAddress;
 
 /**
  * AbstractCodec
+ * 实现 Codec2 接口
  */
 public abstract class AbstractCodec implements Codec2 {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractCodec.class);
 
+    /**
+     * 校验消息长度。
+     */
     protected static void checkPayload(Channel channel, long size) throws IOException {
         int payload = Constants.DEFAULT_PAYLOAD;
         if (channel != null && channel.getUrl() != null) {
@@ -49,6 +53,9 @@ public abstract class AbstractCodec implements Codec2 {
         }
     }
 
+    /**
+     * 获得 Serialization 对象
+     */
     protected Serialization getSerialization(Channel channel) {
         return CodecSupport.getSerialization(channel.getUrl());
     }
@@ -61,6 +68,9 @@ public abstract class AbstractCodec implements Codec2 {
         return CodecSupport.getSerialization(channel.getUrl());
     }
 
+    /**
+     * 是否为客户端侧的通道
+     */
     protected boolean isClientSide(Channel channel) {
         String side = (String) channel.getAttribute(Constants.SIDE_KEY);
         if ("client".equals(side)) {
@@ -80,6 +90,9 @@ public abstract class AbstractCodec implements Codec2 {
         }
     }
 
+    /**
+     * 是否为服务端侧的通道
+     */
     protected boolean isServerSide(Channel channel) {
         return !isClientSide(channel);
     }

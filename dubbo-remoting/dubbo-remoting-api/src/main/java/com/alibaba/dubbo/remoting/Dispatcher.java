@@ -26,7 +26,7 @@ import com.alibaba.dubbo.remoting.transport.dispatcher.all.AllDispatcher;
  * ChannelHandlerWrapper (SPI, Singleton, ThreadSafe)
  * 调度器接口
  */
-@SPI(AllDispatcher.NAME)
+@SPI(AllDispatcher.NAME)          // Dubbo SPI 拓展点，默认为 "all" 。
 public interface Dispatcher {
 
     /**
@@ -36,7 +36,7 @@ public interface Dispatcher {
      * @param url
      * @return channel handler
      */
-    @Adaptive({Constants.DISPATCHER_KEY, "dispather", "channel.handler"})
+    @Adaptive({Constants.DISPATCHER_KEY, "dispather", "channel.handler"})            // 基于 Dubbo SPI Adaptive 机制，加载对应的 ChanelHander 实现，使用 URL.dispatcher 属性。
     // The last two parameters are reserved for compatibility with the old configuration
     ChannelHandler dispatch(ChannelHandler handler, URL url);
 

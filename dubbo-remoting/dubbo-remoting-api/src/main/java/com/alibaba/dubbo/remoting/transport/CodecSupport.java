@@ -39,9 +39,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.alibaba.dubbo.common.Constants.SERIALIZATION_KEY;
 
+/**
+ * 编解码工具类，提供查询 Serialization 的功能
+ */
 public class CodecSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(CodecSupport.class);
+    /**
+     * 序列化对象集合
+     * key：序列化类型编号 {@link Serialization#getContentTypeId()}
+     */
     private static Map<Byte, Serialization> ID_SERIALIZATION_MAP = new HashMap<Byte, Serialization>();
     private static Map<Byte, String> ID_SERIALIZATIONNAME_MAP = new HashMap<Byte, String>();
     private static Map<String, Byte> SERIALIZATIONNAME_ID_MAP = new HashMap<String, Byte>();
@@ -49,6 +56,7 @@ public class CodecSupport {
     private static Map<String, Set<Byte>> PROVIDER_SUPPORTED_SERIALIZATION = new ConcurrentHashMap<String, Set<Byte>>();
 
     static {
+        // 基于 Dubbo SPI ，初始化
         Set<String> supportedExtensions = ExtensionLoader.getExtensionLoader(Serialization.class).getSupportedExtensions();
         for (String name : supportedExtensions) {
             Serialization serialization = ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(name);

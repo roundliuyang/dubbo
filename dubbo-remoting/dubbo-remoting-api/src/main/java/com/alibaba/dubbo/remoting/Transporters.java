@@ -48,7 +48,7 @@ public class Transporters {
         if (handlers == null || handlers.length == 0) {
             throw new IllegalArgumentException("handlers == null");
         }
-        // 创建 handler
+        // 创建 handler 。若 handlers 是多个，使用 ChannelHandlerDispatcher 进行封装。在 ChannelHandlerDispatcher 中，会循环调用 handlers ，对应的方法。
         ChannelHandler handler;
         if (handlers.length == 1) {
             handler = handlers[0];

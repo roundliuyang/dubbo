@@ -35,6 +35,9 @@ import java.util.concurrent.Executors;
 import static com.alibaba.dubbo.common.Constants.SHARED_CONSUMER_EXECUTOR_PORT;
 import static com.alibaba.dubbo.common.Constants.SHARE_EXECUTOR_KEY;
 
+/**
+ * 包装的 WrappedChannelHandler 实现类
+ */
 public class WrappedChannelHandler implements ChannelHandlerDelegate {
 
     protected static final Logger logger = LoggerFactory.getLogger(WrappedChannelHandler.class);

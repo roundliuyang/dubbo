@@ -19,6 +19,7 @@ package com.alibaba.dubbo.remoting.exchange;
 import com.alibaba.dubbo.remoting.Client;
 
 /**
+ * 信息交换客户端接口
  * ExchangeClient. (API/SPI, Prototype, ThreadSafe)
  *
  *

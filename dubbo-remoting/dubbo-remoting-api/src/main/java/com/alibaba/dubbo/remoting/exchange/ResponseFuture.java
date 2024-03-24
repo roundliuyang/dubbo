@@ -20,6 +20,7 @@ import com.alibaba.dubbo.remoting.RemotingException;
 
 /**
  * Future. (API/SPI, Prototype, ThreadSafe)
+ * 响应 Future 接口
  *
  * @see com.alibaba.dubbo.remoting.exchange.ExchangeChannel#request(Object)
  * @see com.alibaba.dubbo.remoting.exchange.ExchangeChannel#request(Object, int)
@@ -28,6 +29,7 @@ public interface ResponseFuture {
 
     /**
      * get result.
+     * 获得值
      *
      * @return result.
      */
@@ -43,6 +45,7 @@ public interface ResponseFuture {
 
     /**
      * set callback.
+     * 设置回调
      *
      * @param callback
      */
@@ -50,6 +53,7 @@ public interface ResponseFuture {
 
     /**
      * check is done.
+     * 是否完成
      *
      * @return done or not.
      */

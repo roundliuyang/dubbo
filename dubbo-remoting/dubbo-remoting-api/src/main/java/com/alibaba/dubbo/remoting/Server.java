@@ -31,6 +31,7 @@ import java.util.Collection;
 public interface Server extends Endpoint, Resetable {
 
     /**
+     * 是否绑定本地端口，提供服务。即，是否启动成功，可连接，接收消息等。
      * is bound.
      *
      * @return bound

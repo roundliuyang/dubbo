@@ -21,6 +21,9 @@ import com.alibaba.dubbo.common.URL;
 import java.net.InetSocketAddress;
 
 /**
+ * 端点接口
+ * Endpoint ，从中文上解释来说是，“端点”。从字面上来看，不太容易理解。在 dubbo-remoting-api 中，一个 Client 或 Server ，都是一个 Endpoint 。
+ * 不同系统的，Endpoint 代表的会略有差距，例如 SpringMVC 中，一个请求 Restful URL 也可以是一个 Endpoint 。
  * Endpoint. (API/SPI, Prototype, ThreadSafe)
  *
  *

@@ -26,19 +26,26 @@ import java.io.IOException;
 /**
  * 编解码器接口
  */
-@SPI
+@SPI               // Dubbo SPI 拓展点。
 public interface Codec2 {
 
     /**
      * 编码
      * @param channel 通道
-     * @param buffer
-     * @param message
-     * @throws IOException
+     * @param buffer Buffer
+     * @param message 消息
+     * @throws IOException 当编码发生异常时
      */
-    @Adaptive({Constants.CODEC_KEY})
+    @Adaptive({Constants.CODEC_KEY})                    // 基于 Dubbo SPI Adaptive 机制，加载对应的 Codec2 实现，使用 URL.codec 属性。
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
 
+    /**
+     * 解码
+     * @param channel 通道
+     * @param buffer  Buffer
+     * @return        消息
+     * @throws IOException 当解码发生异常时
+     */
     @Adaptive({Constants.CODEC_KEY})
     Object decode(Channel channel, ChannelBuffer buffer) throws IOException;
 

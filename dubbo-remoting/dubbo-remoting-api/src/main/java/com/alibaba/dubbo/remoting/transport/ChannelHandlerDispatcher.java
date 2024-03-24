@@ -27,6 +27,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * ChannelListenerDispatcher
+ * 实现 ChannelHandler 接口，通道处理器调度器。在它内部，有一个通道处理器数组 channelHandlers 属性。
+ * 每个实现的方法，都会循环调用 channelHandlers 的方法，搜索了下 ChannelHandlerDispatcher 的使用情况，主要用在 dubbo-remoting-p2p 的 AbstractGroup 中。
  */
 public class ChannelHandlerDispatcher implements ChannelHandler {
 

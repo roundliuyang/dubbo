@@ -26,6 +26,9 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.remoting.exchange.Request;
 import com.alibaba.dubbo.remoting.exchange.Response;
 
+/**
+ * 解码处理器，处理接收到的消息
+ */
 public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     private static final Logger log = LoggerFactory.getLogger(DecodeHandler.class);
@@ -36,25 +39,32 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        // 当消息是 Decodeable 类型时，调用 #decode(message) 方法，解析消息。
         if (message instanceof Decodeable) {
             decode(message);
         }
 
+        // 当消息是 Request 类型时，调用 #decode(message) 方法，解析 data 属性。
         if (message instanceof Request) {
             decode(((Request) message).getData());
         }
 
+        // 当消息是 Response 类型时，调用 #decode(message) 方法，解析 result 属性。
         if (message instanceof Response) {
             decode(((Response) message).getResult());
         }
 
+        // 调用 ChannelHandler#received(channel, message) 方法，将消息交给委托的 handler ，继续处理。
         handler.received(channel, message);
     }
 
+    /**
+     * 解析消息
+     */
     private void decode(Object message) {
         if (message != null && message instanceof Decodeable) {
             try {
-                ((Decodeable) message).decode();
+                ((Decodeable) message).decode();    // 解析消息
                 if (log.isDebugEnabled()) {
                     log.debug("Decode decodeable message " + message.getClass().getName());
                 }

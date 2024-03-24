@@ -36,6 +36,7 @@ public interface Transporter {
 
     /**
      * Bind a server.
+     * 绑定一个服务器
      *
      * @param url     server url
      * @param handler 通道处理器
@@ -50,8 +51,8 @@ public interface Transporter {
      * Connect to a server.
      *
      * @param url     server url
-     * @param handler
-     * @return client
+     * @param handler 通道处理器
+     * @return client 客户端
      * @throws RemotingException
      * @see com.alibaba.dubbo.remoting.Transporters#connect(URL, ChannelHandler...)
      */
