@@ -120,6 +120,10 @@ public class ExtensionLoader<T> {
      * 1. 自适应拓展实现类。例如 AdaptiveExtensionFactory
      * 2. 带唯一参数为拓展接口的构造方法的实现类，或者说拓展 Wrapper 实现类。例如，ProtocolFilterWrapper拓展 Wrapper 实现类，会添加到 {@link #cachedWrapperClasses} 中
      * 通过 {@link #loadExtensionClasses} 加载
+     * 
+     * 例如
+     *  key:"jdk"        value:"com.alibaba.dubbo.common.compiler.support.JdkCompiler"
+     *  key:"javassist"  value:"com.alibaba.dubbo.common.compiler.support.JavassistCompiler"
      */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
@@ -375,6 +379,10 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 返回指定名字的扩展对象
+     * @param name 拓展名
+     * @return 拓展对象         
+     * 
      * Find the extension with the given name. If the specified name is not found, then {@link IllegalStateException}
      * will be thrown.
      */
@@ -671,11 +679,11 @@ public class ExtensionLoader<T> {
      * @return  拓展实现类数组
      *
      * cachedClasses 属性，缓存的拓展实现类集合。它不包含如下两种类型的拓展实现：
-     *     自适应拓展实现类。例如 AdaptiveExtensionFactory
-     *         拓展 Adaptive 实现类，会添加到 cachedAdaptiveClass 属性中。
-     *     带唯一参数为拓展接口的构造方法的实现类，或者说拓展 Wrapper 实现类。例如，ProtocolFilterWrapper
-     *         拓展 Wrapper 实现类，会添加到 cachedWrapperClasses 属性中
-     *     总结来说，cachedClasses + cachedAdaptiveClass + cachedWrapperClasses 才是完整缓存的拓展实现类的配置
+     *     •自适应拓展实现类。例如 AdaptiveExtensionFactory
+     *        •拓展 Adaptive 实现类，会添加到 cachedAdaptiveClass 属性中。
+     *     •带唯一参数为拓展接口的构造方法的实现类，或者说拓展 Wrapper 实现类。例如，ProtocolFilterWrapper
+     *        •拓展 Wrapper 实现类，会添加到 cachedWrapperClasses 属性中
+     *     •总结来说，cachedClasses + cachedAdaptiveClass + cachedWrapperClasses 才是完整缓存的拓展实现类的配置
      */
     private Map<String, Class<?>> getExtensionClasses() {
         // 从缓存中，获得拓展实现类数组
@@ -876,8 +884,14 @@ public class ExtensionLoader<T> {
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
+    /**
+     * 自动生成自适应拓展的代码实现，并编译后返回该类。
+     * @return 类
+     */
     private Class<?> createAdaptiveExtensionClass() {
+        // 自动生成自适应拓展的代码实现的字符串
         String code = createAdaptiveExtensionClassCode();
+        // 编译代码，并返回该类
         ClassLoader classLoader = findClassLoader();
         com.alibaba.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
         return compiler.compile(code, classLoader);
