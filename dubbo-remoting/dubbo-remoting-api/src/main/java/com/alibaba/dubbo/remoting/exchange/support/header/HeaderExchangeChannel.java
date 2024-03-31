@@ -45,6 +45,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
 
     /**
      * 通道
+     * 例如：com.alibaba.dubbo.remoting.transport.netty4.NettyClient
      */
     private final Channel channel;
 

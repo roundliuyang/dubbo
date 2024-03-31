@@ -53,6 +53,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     /**
      * 客户端
+     * 例如 ： HeaderExchangeClient
      */
     private ExchangeClient client;
 

@@ -118,7 +118,7 @@ final class NettyChannel extends AbstractChannel {
         boolean success = true;
         int timeout = 0;
         try {
-            // 调用真正的 io.netty.channel.Channel#writeAndFlush(message) 方法，发送消息
+            // 调用真正的 io.netty.channel.Channel#writeAndFlush(message) 方法，发送消息。如 使用NioSocketChannel
             ChannelFuture future = channel.writeAndFlush(message);
             // 等待发送成功
             if (sent) {

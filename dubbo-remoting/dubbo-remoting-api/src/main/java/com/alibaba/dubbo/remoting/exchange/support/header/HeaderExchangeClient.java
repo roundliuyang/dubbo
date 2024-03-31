@@ -55,6 +55,7 @@ public class HeaderExchangeClient implements ExchangeClient {
     private final Client client;
     /**
      * 信息交换通道
+     * 例如：HeaderExchangeChannel
      */
     private final ExchangeChannel channel;
     // heartbeat timer
